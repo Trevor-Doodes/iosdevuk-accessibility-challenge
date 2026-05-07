@@ -36,11 +36,8 @@ struct ParallelTalkCardView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    HStack {
-                        Spacer()
-                        FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))
-                            .accessibilityHidden(true)
-                    }
+                    // Space reserved so the overlay button doesn't obscure text
+                    Color.clear.frame(height: 44)
                 }
                 .padding()
             }
@@ -55,15 +52,11 @@ struct ParallelTalkCardView: View {
             )
         }
         .accessibilityLabel("\(session.sessionType.displayName): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
-        .accessibilityAction(named: viewModel.isFavourite(talk: viewModel.talkFrom(talkID: talkID)) ? "Remove from favourites" : "Add to favourites") {
-            let talk = viewModel.talkFrom(talkID: talkID)
-            if viewModel.isFavourite(talk: talk) {
-                viewModel.removeFavourite(talk: talk)
-            } else {
-                viewModel.addFavourite(talk: talk)
-            }
-        }
         .accessibilityRotorEntry(id: talkID, in: rotorNamespace)
         .buttonStyle(.plain)
+        .overlay(alignment: .bottomTrailing) {
+            FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))
+                .padding(8)
+        }
     }
 }
