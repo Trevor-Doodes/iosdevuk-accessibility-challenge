@@ -8,8 +8,13 @@ import SwiftUI
 /// A card showing a single talk within a parallel-session slot.
 struct ParallelTalkCardView: View {
     @Environment(ViewModel.self) private var viewModel
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let talkID: UUID
     let session: Session
+    let rotorNamespace: Namespace.ID
+
+    private var cardOpacity: Double { (contrast == .increased || reduceTransparency) ? 0.25 : 0.1 }
 
     var body: some View {
         NavigationLink(value: TalkReference(talkID: talkID, session: session)) {
@@ -34,13 +39,20 @@ struct ParallelTalkCardView: View {
                     HStack {
                         Spacer()
                         FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))
+                            .accessibilityHidden(true)
                     }
                 }
                 .padding()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(session.sessionType.color.opacity(0.1), in: .rect(cornerRadius: 10))
+            .background(session.sessionType.color.opacity(cardOpacity), in: .rect(cornerRadius: 10))
             .clipShape(.rect(cornerRadius: 10))
+            .overlay(
+                (contrast == .increased || reduceTransparency) ?
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(session.sessionType.color, lineWidth: 1.5)
+                        .allowsHitTesting(false) : nil
+            )
         }
         .accessibilityLabel("\(session.sessionType.displayName): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
         .accessibilityAction(named: viewModel.isFavourite(talk: viewModel.talkFrom(talkID: talkID)) ? "Remove from favourites" : "Add to favourites") {
@@ -51,6 +63,7 @@ struct ParallelTalkCardView: View {
                 viewModel.addFavourite(talk: talk)
             }
         }
+        .accessibilityRotorEntry(id: talkID, in: rotorNamespace)
         .buttonStyle(.plain)
     }
 }

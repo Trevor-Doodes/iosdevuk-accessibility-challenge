@@ -20,6 +20,7 @@ struct SocialLinksView: View {
                             .padding(.horizontal, 4)
                     }
                     .contentShape(.rect)
+                    .accessibilityHint("Opens in browser")
                 }
             }
         }
