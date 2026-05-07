@@ -11,13 +11,12 @@ struct DayScheduleView: View {
     @Namespace private var rotorNamespace
     let sessions: [Session]
 
-    private var favouriteTalkIDs: [UUID] {
-        sessions.flatMap { session in
+    var body: some View {
+        // Computed inside body so @Observable tracking is active when favouriteIds is accessed
+        let favouriteTalkIDs = sessions.flatMap { session in
             session.contentIDs.filter { viewModel.isFavourite(talk: viewModel.talkFrom(talkID: $0)) }
         }
-    }
 
-    var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 ForEach(sessions) { session in

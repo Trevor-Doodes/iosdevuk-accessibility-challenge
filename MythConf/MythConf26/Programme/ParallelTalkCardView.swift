@@ -52,11 +52,11 @@ struct ParallelTalkCardView: View {
             )
         }
         .accessibilityLabel("\(session.sessionType.displayName): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
-        .accessibilityRotorEntry(id: talkID, in: rotorNamespace)
         .buttonStyle(.plain)
         .overlay(alignment: .bottomTrailing) {
             FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))
                 .padding(8)
         }
+        .accessibilityRotorEntry(id: talkID, in: rotorNamespace)
     }
 }
