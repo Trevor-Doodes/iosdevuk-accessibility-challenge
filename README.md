@@ -62,3 +62,13 @@ After grouping rows into single combined elements, Voice Control users activate 
 
 **Haptic feedback when toggling a favourite** (`FavouriteButtonView`)\
 A success haptic fires each time a talk is added to or removed from favourites. This provides a tactile confirmation of the action for users who may not be relying on visual feedback alone, and is a non-auditory equivalent to a sound cue.
+
+---
+
+## Bug fixes
+
+**Favourite button independently focusable by VoiceOver** (`ParallelTalkCardView`)\
+The favourite star button was originally nested inside the talk card's `NavigationLink` label and hidden from VoiceOver, with the toggle exposed only as a custom accessibility action. Custom actions require the VoiceOver Actions rotor — a non-obvious gesture that most users will not discover. The button has been moved into an overlay on the card so it sits alongside the `NavigationLink` as a sibling element. Both can now be focused and double-tapped independently: the card navigates to the session detail, the button toggles the favourite.
+
+**Favourite Sessions rotor now jumps correctly between starred talks** (`DayScheduleView`)\
+The programme schedule used a `LazyVStack` which only renders rows currently visible on screen. Off-screen talk cards had not yet registered their rotor entries, so VoiceOver fell back to sequential row navigation instead of jumping to favourites. Switching to a plain `VStack` ensures all rows are in the accessibility tree upfront. A conference day has at most around 30 rows, so there is no meaningful performance cost to rendering them all at once.
