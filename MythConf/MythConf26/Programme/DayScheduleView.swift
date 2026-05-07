@@ -12,16 +12,19 @@ struct DayScheduleView: View {
     let sessions: [Session]
 
     var body: some View {
-        // Computed inside body so @Observable tracking is active when favouriteIds is accessed
-        let favouriteTalkIDs = sessions.flatMap { session in
-            session.contentIDs.filter { viewModel.isFavourite(talk: viewModel.talkFrom(talkID: $0)) }
+        // Computed inside body so @Observable tracking registers favouriteIds correctly
+        let sessionsWithFavourites = sessions.filter { session in
+            session.containsTalk && session.contentIDs.contains {
+                viewModel.isFavourite(talk: viewModel.talkFrom(talkID: $0))
+            }
         }
 
         ScrollView {
             VStack(spacing: 0) {
                 ForEach(sessions) { session in
                     if session.containsTalk {
-                        ParallelSessionsRowView(session: session, rotorNamespace: rotorNamespace)
+                        ParallelSessionsRowView(session: session)
+                            .accessibilityRotorEntry(id: session.id, in: rotorNamespace)
                     } else {
                         BreakRowView(session: session)
                     }
@@ -31,9 +34,16 @@ struct DayScheduleView: View {
             }
         }
         .accessibilityRotor("Favourite Sessions") {
-            ForEach(favouriteTalkIDs, id: \.self) { talkID in
-                AccessibilityRotorEntry(viewModel.talkTitleFrom(talkID: talkID), talkID, in: rotorNamespace)
+            ForEach(sessionsWithFavourites) { session in
+                AccessibilityRotorEntry(rotorLabel(for: session), session.id, in: rotorNamespace)
             }
         }
+    }
+
+    private func rotorLabel(for session: Session) -> String {
+        let firstFavouriteTitle = session.contentIDs
+            .first { viewModel.isFavourite(talk: viewModel.talkFrom(talkID: $0)) }
+            .map { viewModel.talkTitleFrom(talkID: $0) }
+        return firstFavouriteTitle.map { "\(session.startTimeText): \($0)" } ?? session.startTimeText
     }
 }

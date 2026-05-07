@@ -7,7 +7,6 @@ import SwiftUI
 
 struct MyScheduleView: View {
     @Environment(ViewModel.self) private var viewModel
-    @Namespace private var rotorNamespace
 
     var body: some View {
         NavigationStack {
@@ -26,7 +25,7 @@ struct MyScheduleView: View {
                                 if daySessions.first?.sessionType != .dummy {
                                     Section {
                                         ForEach(daySessions) { session in
-                                            ParallelSessionsRowView(session: session, rotorNamespace: rotorNamespace)
+                                            ParallelSessionsRowView(session: session)
                                             Divider()
                                         }
                                     } header: {

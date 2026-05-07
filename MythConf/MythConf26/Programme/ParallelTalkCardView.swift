@@ -12,7 +12,6 @@ struct ParallelTalkCardView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let talkID: UUID
     let session: Session
-    let rotorNamespace: Namespace.ID
 
     private var cardOpacity: Double { (contrast == .increased || reduceTransparency) ? 0.25 : 0.1 }
 
@@ -57,6 +56,5 @@ struct ParallelTalkCardView: View {
             FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))
                 .padding(8)
         }
-        .accessibilityRotorEntry(id: talkID, in: rotorNamespace)
     }
 }
