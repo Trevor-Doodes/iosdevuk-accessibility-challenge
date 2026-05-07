@@ -19,7 +19,7 @@ struct DayScheduleView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
+            VStack(spacing: 0) {
                 ForEach(sessions) { session in
                     if session.containsTalk {
                         ParallelSessionsRowView(session: session, rotorNamespace: rotorNamespace)
