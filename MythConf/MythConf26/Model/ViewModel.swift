@@ -30,68 +30,79 @@ class ViewModel {
         }
     }
     
+    // MARK: Lookups
+    //
+    // These helpers underpin every accessibility label on talk cards,
+    // speaker rows, and location screens. The previous implementations used
+    // `filter{...}[0]` which trap-crashes whenever the data has a missing
+    // reference — even a single typo'd ID in `conf.json` would take the app
+    // down. They now use `first(where:)` with safe fallback strings, and
+    // `assertionFailure` so bad references still surface loudly during
+    // development.
+
     func talkFrom(talkID: UUID) -> Talk {
-        let matchingTalks = confData.talks.filter{$0.id == talkID}
-        if matchingTalks.count != 1 {print("Error - talkID did not exist")}
-        return matchingTalks[0]
-    }
-    
-    func talkUUIDFrom(talkTitle: String) -> UUID {
-        let matchingTalks = confData.talks.filter{$0.talkTitle == talkTitle}
-        if matchingTalks.count != 1 {print("Error - talkTitle did not exist")}
-        return matchingTalks[0].id
-    }
-    
-    func talkTitleFrom(talkID: UUID) -> String {
-        let matchingTalks = confData.talks.filter{$0.id == talkID}
-        if matchingTalks.count != 1 {print("Error - talkID did not exist")}
-        return matchingTalks[0].talkTitle
-    }
-    
-    func speakersFrom(talkID: UUID) -> String {
-        let matchingTalks = confData.talks.filter{$0.id == talkID}
-        if matchingTalks.count != 1 {print("Error - talkID did not exist")}
-        let speakerIDs = matchingTalks[0].speakerIDs
-        var speakers = speakerNameFrom(speakerID: speakerIDs[0])
-        if speakerIDs.count > 1 {
-            speakers = speakers + " and \(speakerNameFrom(speakerID: speakerIDs[1]))"
+        if let talk = confData.talks.first(where: { $0.id == talkID }) {
+            return talk
         }
-        return speakers
+        assertionFailure("Talk with id \(talkID) not found")
+        return Talk(id: talkID, talkTitle: "Talk to be announced", talkDescription: "", speakerIDs: [], locationID: "")
     }
-    
+
+    func talkUUIDFrom(talkTitle: String) -> UUID {
+        if let talk = confData.talks.first(where: { $0.talkTitle == talkTitle }) {
+            return talk.id
+        }
+        assertionFailure("Talk with title '\(talkTitle)' not found")
+        return UUID()
+    }
+
+    func talkTitleFrom(talkID: UUID) -> String {
+        confData.talks.first(where: { $0.id == talkID })?.talkTitle ?? "Talk to be announced"
+    }
+
+    func speakersFrom(talkID: UUID) -> String {
+        guard let talk = confData.talks.first(where: { $0.id == talkID }),
+              !talk.speakerIDs.isEmpty else {
+            return "Speaker to be announced"
+        }
+        let names = talk.speakerIDs.map { speakerNameFrom(speakerID: $0) }
+        return names.formatted(.list(type: .and))
+    }
+
     func speakerNameFrom(speakerID: String) -> String {
-        let matchingSpeakers = confData.speakers.filter{$0.id == speakerID}
-        if matchingSpeakers.count != 1 {print("Error - speakerID did not exist")}
-        return matchingSpeakers[0].name
+        confData.speakers.first(where: { $0.id == speakerID })?.name ?? "Speaker to be announced"
     }
-    
+
     func speakerFrom(speakerID: String) -> Speaker {
-        let matchingSpeakers = confData.speakers.filter{$0.id == speakerID}
-        if matchingSpeakers.count != 1 {print("Error - speakerID did not exist")}
-        return matchingSpeakers[0]
+        if let speaker = confData.speakers.first(where: { $0.id == speakerID }) {
+            return speaker
+        }
+        assertionFailure("Speaker with id \(speakerID) not found")
+        return Speaker(id: speakerID, name: "Speaker to be announced", talkIDs: [])
     }
-    
+
     func locationFrom(talkID: UUID) -> Location {
-        let matchingTalks = confData.talks.filter{$0.id == talkID}
-        if matchingTalks.count != 1 {print("Error - talkID did not exist")}
-        let locationID = matchingTalks[0].locationID
-        let matchingLocations = confData.locations.filter{$0.id == locationID}
-        return matchingLocations[0]
+        guard let talk = confData.talks.first(where: { $0.id == talkID }) else {
+            assertionFailure("Talk with id \(talkID) not found")
+            return Location(id: "", name: "Location to be announced", latitude: 0, longitude: 0, placeDescription: "")
+        }
+        return locationFrom(locationID: talk.locationID)
     }
-    
+
     func locationFrom(locationID: String) -> Location {
-        let matchingLocations = confData.locations.filter{$0.id == locationID}
-        return matchingLocations[0]
+        if let location = confData.locations.first(where: { $0.id == locationID }) {
+            return location
+        }
+        assertionFailure("Location with id '\(locationID)' not found")
+        return Location(id: locationID, name: "Location to be announced", latitude: 0, longitude: 0, placeDescription: "")
     }
-    
+
     func locationNameFrom(talkID: UUID) -> String {
-        let location = locationFrom(talkID: talkID)
-        return location.name
+        locationFrom(talkID: talkID).name
     }
-    
+
     func locationNameFrom(locationID: String) -> String {
-        let location = locationFrom(locationID: locationID)
-        return location.name
+        locationFrom(locationID: locationID).name
     }
     
     // Handling favourites

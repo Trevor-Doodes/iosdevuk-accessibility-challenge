@@ -3,6 +3,7 @@
 //  MythConf26Tests
 //
 
+import Foundation
 import Testing
 @testable import MythConf26
 
@@ -121,21 +122,28 @@ struct LookupTests {
         }
     }
 
-    /// For every talk whose speaker references resolve, the speaker name
-    /// string the card reads aloud must be non-empty. The card reads
-    /// "by [speakers]" so an empty value would produce "by ,".
-    @Test func everyResolvableTalkHasASpeakerName() {
-        let knownSpeakerIDs = Set(viewModel.confData.speakers.map(\.id))
-        let resolvableTalks = viewModel.confData.talks.filter { talk in
-            !talk.speakerIDs.isEmpty && talk.speakerIDs.allSatisfy(knownSpeakerIDs.contains)
-        }
-        // The conf data has at least some well-formed entries.
-        #expect(!resolvableTalks.isEmpty)
-
-        for talk in resolvableTalks {
+    /// `speakersFrom` must return a non-empty string for every talk so the
+    /// card's "by [speakers]" clause is never blank. Talks with missing or
+    /// unknown speaker IDs fall back to a placeholder rather than crashing.
+    @Test func everyTalkHasASpeakerName() {
+        for talk in viewModel.confData.talks {
             let speakers = viewModel.speakersFrom(talkID: talk.id)
             #expect(!speakers.isEmpty, "Talk '\(talk.talkTitle)' produced empty speaker name string")
         }
+    }
+
+    /// Talks with multiple speakers are joined by `formatted(.list(type:.and))`
+    /// — "A and B" or "A, B, and C" — so VoiceOver doesn't run names
+    /// together. The current conf data has no multi-speaker talks, so this
+    /// test verifies the formatter contract directly with synthetic input
+    /// to guard the behaviour for when the data does include co-presented
+    /// talks.
+    @Test func multipleSpeakersAreJoinedNaturally() {
+        let two = ["Ada Lovelace", "Alan Turing"].formatted(.list(type: .and))
+        let three = ["Ada Lovelace", "Alan Turing", "Grace Hopper"].formatted(.list(type: .and))
+
+        #expect(two.contains(" and "), "Two-speaker join should contain ' and ': got '\(two)'")
+        #expect(three.contains(" and "), "Three-speaker join should contain ' and ': got '\(three)'")
     }
 
 }
