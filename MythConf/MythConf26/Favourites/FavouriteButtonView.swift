@@ -23,26 +23,23 @@ struct FavouriteButtonView: View {
             let wasAlreadyFavourite = isFavourite
 
             // Freeze the label at the pre-tap state so VoiceOver does not
-            // auto-announce the change before our custom message plays.
+            // auto-announce the change while our custom message is queued.
             labelOverride = wasAlreadyFavourite
 
             if wasAlreadyFavourite {
                 viewModel.removeFavourite(talk: talk)
-                UIAccessibility.post(notification: .announcement, argument: "Removed from favourites.")
+                AccessibilityAnnouncer.shared.announce("Removed from favourites.")
             } else {
                 viewModel.addFavourite(talk: talk)
-                UIAccessibility.post(
-                    notification: .announcement,
-                    argument: "Added to favourites. Switch to My Schedule to see all your saved sessions."
+                AccessibilityAnnouncer.shared.announce(
+                    "Added to favourites. Switch to My Schedule to see all your saved sessions."
                 )
             }
 
-            // Release the freeze after the announcement has had time to play.
-            // If VoiceOver is still focused on this button it will naturally
-            // re-read the element with its updated label ("Remove from favourites"
-            // or "Add to favourites"). If the user has moved away the update
-            // happens silently.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            // Release the freeze after the announcement (plus retry window) has
+            // had time to play. If VoiceOver is still focused on this button it
+            // will then naturally re-read the element with its updated label.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                 labelOverride = nil
             }
         } label: {
