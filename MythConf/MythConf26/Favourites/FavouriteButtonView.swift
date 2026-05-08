@@ -16,7 +16,9 @@ struct FavouriteButtonView: View {
     @State private var labelOverride: Bool? = nil
 
     private var isFavourite: Bool { viewModel.isFavourite(talk: talk) }
-    private var displayAsFavourite: Bool { labelOverride ?? isFavourite }
+    /// Drives the accessibility label only — frozen during the announcement
+    /// window so VoiceOver does not auto-read the new label mid-announcement.
+    private var labelIsFavourite: Bool { labelOverride ?? isFavourite }
 
     var body: some View {
         Button {
@@ -43,11 +45,11 @@ struct FavouriteButtonView: View {
                 labelOverride = nil
             }
         } label: {
-            Image(systemName: displayAsFavourite ? "star.fill" : "star")
-                .foregroundStyle(displayAsFavourite ? .yellow : .secondary)
+            Image(systemName: isFavourite ? "star.fill" : "star")
+                .foregroundStyle(isFavourite ? .yellow : .secondary)
         }
         .frame(minWidth: 44, minHeight: 44)
-        .accessibilityLabel(displayAsFavourite ? "Remove from favourites" : "Add to favourites")
+        .accessibilityLabel(labelIsFavourite ? "Remove from favourites" : "Add to favourites")
         .sensoryFeedback(.success, trigger: isFavourite)
     }
 }
