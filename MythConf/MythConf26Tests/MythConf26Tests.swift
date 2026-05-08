@@ -145,5 +145,74 @@ struct LookupTests {
         #expect(two.contains(" and "), "Two-speaker join should contain ' and ': got '\(two)'")
         #expect(three.contains(" and "), "Three-speaker join should contain ' and ': got '\(three)'")
     }
+}
 
+/// Tests for the talk card's spoken accessibility label. Every comma,
+/// connective and word ordering matters — VoiceOver users hear this string
+/// for every talk on the Programme tab, so a regression in shape would
+/// degrade the experience without showing up visually.
+struct TalkCardAccessibilityLabelTests {
+    let viewModel = ViewModel()
+
+    /// The label must follow the format
+    /// "[Type] from [start] to [end]: [title], by [speakers], [location]"
+    /// so VoiceOver reads a coherent sentence rather than fragments.
+    @Test func talkCardLabelMatchesExpectedShape() throws {
+        let session = try #require(viewModel.confData.sessions.flatMap { $0 }.first { $0.containsTalk })
+        let talkID = try #require(session.contentIDs.first)
+
+        let label = viewModel.talkCardAccessibilityLabel(talkID: talkID, in: session)
+
+        #expect(label.hasPrefix("\(session.sessionType.displayName) from "))
+        #expect(label.contains(" from \(session.startTimeText) to \(session.endTimeText): "))
+        #expect(label.contains(", by "))
+        // The closing comma + location must be the final clause.
+        let location = viewModel.locationNameFrom(talkID: talkID)
+        #expect(label.hasSuffix(", \(location)"))
+    }
+
+    /// A talk card label must never end on a stray comma or "by," pattern
+    /// — a sign that one of the composed parts came back empty.
+    @Test func everyTalkProducesAWellFormedLabel() {
+        for daySessions in viewModel.confData.sessions {
+            for session in daySessions where session.containsTalk {
+                for talkID in session.contentIDs {
+                    let label = viewModel.talkCardAccessibilityLabel(talkID: talkID, in: session)
+
+                    #expect(!label.hasSuffix(","), "Label ended on stray comma: '\(label)'")
+                    #expect(!label.contains(", by ,"), "Label has empty speaker clause: '\(label)'")
+                    #expect(!label.contains(": ,"), "Label has empty title clause: '\(label)'")
+                }
+            }
+        }
+    }
+}
+
+/// Tests for `SessionType.symbolName`. Each session type carries an SF
+/// Symbol used as a redundant shape-based cue alongside its colour.
+struct SessionTypeTests {
+    /// Every non-dummy session type must have a non-empty SF Symbol so the
+    /// shape cue is always present. Dummy is intentionally empty.
+    @Test func everyNonDummySessionTypeHasASymbol() {
+        let typesWithSymbols: [SessionType] = [
+            .talk, .panel, .workshop, .lightningtalks, .teaBreak, .lunch,
+            .dinner, .confdinner, .social, .registration, .railtrip
+        ]
+        for type in typesWithSymbols {
+            #expect(!type.symbolName.isEmpty, "Session type \(type) has no symbol")
+        }
+        #expect(SessionType.dummy.symbolName.isEmpty)
+    }
+
+    /// Each non-dummy session type must have a non-empty display name so
+    /// VoiceOver never speaks an empty session type clause.
+    @Test func everyNonDummySessionTypeHasADisplayName() {
+        let typesWithNames: [SessionType] = [
+            .talk, .panel, .workshop, .lightningtalks, .teaBreak, .lunch,
+            .dinner, .confdinner, .social, .registration, .railtrip
+        ]
+        for type in typesWithNames {
+            #expect(!type.displayName.isEmpty, "Session type \(type) has no display name")
+        }
+    }
 }

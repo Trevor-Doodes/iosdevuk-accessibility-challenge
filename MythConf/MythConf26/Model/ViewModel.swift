@@ -104,6 +104,20 @@ class ViewModel {
     func locationNameFrom(locationID: String) -> String {
         locationFrom(locationID: locationID).name
     }
+
+    /// Builds the accessibility label spoken by VoiceOver when focus lands
+    /// on a talk card. Centralised here so it can be unit-tested for shape
+    /// regressions — every word, comma, and connective in the spoken
+    /// sentence matters for VoiceOver clarity.
+    ///
+    /// Format: "[Type] from [start] to [end]: [title], by [speakers], [location]"
+    func talkCardAccessibilityLabel(talkID: UUID, in session: Session) -> String {
+        let type = session.sessionType.displayName
+        let title = talkTitleFrom(talkID: talkID)
+        let speakers = speakersFrom(talkID: talkID)
+        let location = locationNameFrom(talkID: talkID)
+        return "\(type) from \(session.startTimeText) to \(session.endTimeText): \(title), by \(speakers), \(location)"
+    }
     
     // Handling favourites
     func loadFavourites() {

@@ -60,7 +60,7 @@ struct ParallelTalkCardView: View {
                         .allowsHitTesting(false) : nil
             )
         }
-        .accessibilityLabel("\(session.sessionType.displayName) from \(session.startTimeText) to \(session.endTimeText): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
+        .accessibilityLabel(viewModel.talkCardAccessibilityLabel(talkID: talkID, in: session))
         .accessibilityHint("Opens session details")
         .accessibilityInputLabels([viewModel.talkTitleFrom(talkID: talkID)])
         .buttonStyle(.plain)

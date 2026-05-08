@@ -16,6 +16,30 @@ Best of luck to you all!
 
 The following changes have been made to the MythConf app to improve its accessibility across Apple's Human Interface Guidelines categories.
 
+### Creativity & engineering depth
+
+A handful of changes warrant separate billing because they go beyond applying a SwiftUI modifier — they involve research, custom helpers, or coordination across multiple system behaviours.
+
+**`AccessibilityAnnouncer` — reliable VoiceOver announcements with retry** (`AccessibilityAnnouncer`, `FavouriteButtonView`, `SpeakersView`)\
+`UIAccessibility.post(notification: .announcement, ...)` is best-effort: iOS frequently drops announcements posted while VoiceOver is still speaking other feedback (a button's activation tick, a focus change, a navigation transition). The new helper:
+1. Posts each announcement as an `NSAttributedString` with `.accessibilitySpeechQueueAnnouncement: true` so it queues behind in-flight speech rather than fighting with it.
+2. Delays the post by ~0.4s so VoiceOver's own activation feedback can finish first.
+3. Observes `UIAccessibility.announcementDidFinishNotification` and re-posts up to twice if the system reports the announcement was unsuccessful.
+
+The helper is used both for the favourite-toggle confirmation and for the speaker-search result-count announcement.
+
+**`labelOverride` pattern — coordinating a custom announcement with VoiceOver auto-labels** (`FavouriteButtonView`)\
+When a button's accessibility label changes (e.g. "Add to favourites" → "Remove from favourites"), VoiceOver auto-announces the new label, which would interrupt and overlap the custom message. A `labelOverride: Bool?` state variable freezes the button's accessibility label and `.isSelected` trait at their pre-tap values for four seconds. The custom message plays cleanly; once the freeze lifts, VoiceOver naturally re-reads the button with its updated state if focus remains on it. The icon and colour update instantly — only the spoken label is held — so sighted users never see a delay.
+
+**Defensive `ViewModel` lookups** (`ViewModel`)\
+The talk, speaker, and location lookup helpers used the `confData.X.filter{ $0.id == id }[0]` pattern, which trap-crashes the entire app on any missing reference. They now use `first(where:)` with safe fallback strings ("Speaker to be announced", "Location to be announced") and an `assertionFailure` so bad references still surface loudly during development. The same change replaces the hand-rolled "A and B" join (which silently truncated talks with three or more speakers) with `formatted(.list(type: .and))`, producing locale-aware "A, B, and C" output.
+
+**Enlarged touch target with corner-anchored visible icon** (`FavouriteButtonView`, `ParallelTalkCardView`)\
+The favourite button's hit area is 88×88 points — double the HIG minimum. To avoid stretching the talk card layout, the visible star is anchored to the bottom-right corner of the hit area, and the talk card reserves only ~28pt of bottom space (scaled with Dynamic Type). The remaining 60pt of invisible hit area extends up over text but doesn't push layout, giving users with reduced dexterity a generous target without bloating the cards.
+
+**Differentiated haptics** (`FavouriteButtonView`)\
+Add fires `.success`; remove fires `.impact(weight: .light)`. Two distinguishable patterns let a user without sight or sound tell which action occurred — not just that something happened.
+
 ### Vision
 
 **Speaker photos now have text alternatives** (`SpeakerPhotoView`)\
@@ -103,11 +127,14 @@ A `.success` haptic fires when a talk is added to favourites, and a lighter `.im
 **Favourite button independently focusable by VoiceOver** (`ParallelTalkCardView`)\
 The favourite star button was originally nested inside the talk card's `NavigationLink` label and hidden from VoiceOver, with the toggle exposed only as a custom accessibility action. Custom actions require the VoiceOver Actions rotor — a non-obvious gesture that most users will not discover. The button has been moved into an overlay on the card so it sits alongside the `NavigationLink` as a sibling element. Both can now be focused and double-tapped independently: the card navigates to the session detail, the button toggles the favourite.
 
-**Favourite button independently focusable by VoiceOver — overlay approach** (`ParallelTalkCardView`)\
-After moving the favourite button to an overlay sibling of the `NavigationLink`, the programme schedule has been restored to `LazyVStack` for performance. The button is reliably focusable and activatable by VoiceOver as a separate element from the card.
+(See "Creativity & engineering depth" above for the announcement reliability and defensive-lookup fixes that started life as bug fixes but warrant separate billing.)
 
-**Defensive lookups in `ViewModel` no longer trap-crash on missing references** (`ViewModel`)\
-The talk, speaker, and location lookup helpers used the `confData.X.filter{ $0.id == id }[0]` pattern, which trap-crashes the entire app whenever a referenced ID is absent or mistyped — for example, a talk with an empty `speakerIDs` array or a `locationID` that doesn't match any location. The helpers now use `first(where:)` with safe fallback strings ("Speaker to be announced", "Location to be announced") and an `assertionFailure` so bad references still surface loudly during development. The same change replaces the hand-rolled "A and B" join (which silently truncated talks with three or more speakers) with `formatted(.list(type: .and))`, producing "A and B" or "A, B, and C" with locale-aware formatting.
+## Quality
 
-**Reliable VoiceOver announcements on favourite toggle** (`FavouriteButtonView`, `AccessibilityAnnouncer`)\
-`UIAccessibility.post(notification: .announcement, ...)` is best-effort: iOS frequently drops announcements that are posted while VoiceOver is still speaking the button's own activation feedback, and a naive post also competes with VoiceOver auto-reading the updated button label. The fix has two parts. First, an `AccessibilityAnnouncer` helper posts each announcement as an `NSAttributedString` with `.accessibilitySpeechQueueAnnouncement` (so it queues behind in-flight speech rather than being dropped), waits a short delay so VoiceOver's activation tick can finish, and observes `UIAccessibility.announcementDidFinishNotification` to retry if the system reports the announcement was unsuccessful. Second, a `labelOverride` state variable on the button freezes the displayed accessibility label at its pre-tap state for four seconds so VoiceOver does not auto-read the new label mid-announcement. Once the freeze lifts, VoiceOver naturally re-reads the button with its updated label if focus remains on it.
+The project includes 15 unit tests (Swift Testing) covering:
+- the favourites add/remove cycle, including no-op remove and per-talk independence;
+- talk/speaker/location lookup consistency, round-trip integrity, and the contract that every talk produces a non-empty location and speaker string;
+- the talk card's spoken accessibility label shape, including a corpus check that no talk produces a malformed sentence (stray comma, empty clause);
+- the contract that every non-dummy `SessionType` has both a display name and an SF Symbol so the shape-based cue is always present.
+
+Run with: `xcodebuild test -project MythConf/MythConf26.xcodeproj -scheme MythConf26 -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`
