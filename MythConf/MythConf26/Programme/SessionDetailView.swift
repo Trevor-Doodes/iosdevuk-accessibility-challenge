@@ -50,7 +50,7 @@ struct SessionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                FavouriteButtonView(talk: talk)
+                FavouriteButtonView(talk: talk, compact: true)
             }
         }
     }

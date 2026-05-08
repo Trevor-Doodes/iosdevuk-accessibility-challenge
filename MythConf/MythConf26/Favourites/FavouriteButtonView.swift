@@ -10,6 +10,11 @@ import UIKit
 struct FavouriteButtonView: View {
     @Environment(ViewModel.self) private var viewModel
     let talk: Talk
+    /// When `true`, render at default toolbar/control size with no material
+    /// backing — appropriate for `.toolbar` placements where an 88pt button
+    /// would dominate the navigation bar. Defaults to `false` so the talk
+    /// card overlay keeps its enlarged Mobility-friendly hit area.
+    var compact: Bool = false
     /// When non-nil, overrides the displayed accessibility state so the label
     /// and selected trait stay frozen during the announcement sequence,
     /// preventing VoiceOver from auto-announcing the state change before our
@@ -55,6 +60,25 @@ struct FavouriteButtonView: View {
                 labelOverride = nil
             }
         } label: {
+            iconView
+        }
+        .modifier(SizeModifier(compact: compact))
+        .accessibilityLabel(labelIsFavourite ? "Remove from favourites" : "Add to favourites")
+        .accessibilityHint(labelIsFavourite ? "Removes this session from your saved schedule" : "Adds this session to your saved schedule")
+        .accessibilityAddTraits(labelIsFavourite ? .isSelected : [])
+        .accessibilityInputLabels(["Favourite", "Star", "Save"])
+        .sensoryFeedback(trigger: isFavourite) { _, newValue in
+            newValue ? .success : .impact(weight: .light)
+        }
+    }
+
+    @ViewBuilder
+    private var iconView: some View {
+        if compact {
+            Image(systemName: isFavourite ? "star.fill" : "star")
+                .foregroundStyle(isFavourite ? .orange : .primary)
+                .symbolEffect(.bounce, value: isFavourite)
+        } else {
             Image(systemName: isFavourite ? "star.fill" : "star")
                 .font(.title3)
                 .foregroundStyle(isFavourite ? .orange : .primary)
@@ -65,14 +89,21 @@ struct FavouriteButtonView: View {
                 // lightning-talks tint where a yellow star would vanish).
                 .background(Circle().fill(.regularMaterial))
         }
-        .frame(minWidth: 88, minHeight: 88, alignment: .bottomTrailing)
-        .contentShape(Rectangle())
-        .accessibilityLabel(labelIsFavourite ? "Remove from favourites" : "Add to favourites")
-        .accessibilityHint(labelIsFavourite ? "Removes this session from your saved schedule" : "Adds this session to your saved schedule")
-        .accessibilityAddTraits(labelIsFavourite ? .isSelected : [])
-        .accessibilityInputLabels(["Favourite", "Star", "Save"])
-        .sensoryFeedback(trigger: isFavourite) { _, newValue in
-            newValue ? .success : .impact(weight: .light)
+    }
+
+    /// Sizes the button for its placement context. The talk-card overlay
+    /// gets an enlarged 88pt hit area; toolbar placements use the system
+    /// default control size.
+    private struct SizeModifier: ViewModifier {
+        let compact: Bool
+        func body(content: Content) -> some View {
+            if compact {
+                content
+            } else {
+                content
+                    .frame(minWidth: 88, minHeight: 88, alignment: .bottomTrailing)
+                    .contentShape(Rectangle())
+            }
         }
     }
 }
