@@ -72,3 +72,6 @@ The favourite star button was originally nested inside the talk card's `Navigati
 
 **Favourite button independently focusable by VoiceOver — overlay approach** (`ParallelTalkCardView`)\
 After moving the favourite button to an overlay sibling of the `NavigationLink`, the programme schedule has been restored to `LazyVStack` for performance. The button is reliably focusable and activatable by VoiceOver as a separate element from the card.
+
+**VoiceOver announcement sequencing on favourite toggle** (`FavouriteButtonView`)\
+When the favourite state changed, VoiceOver would auto-announce the updated button label ("Remove from favourites") at the same time as the custom confirmation message, causing the two announcements to compete. A `labelOverride` state variable now freezes the displayed label at the pre-tap state for three seconds so VoiceOver hears only the custom message. After the freeze lifts, VoiceOver naturally re-reads the button with its updated label if focus remains on it, giving users the full sequence: custom confirmation first, then the updated button state.
