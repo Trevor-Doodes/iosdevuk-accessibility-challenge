@@ -15,6 +15,7 @@ struct FavouriteButtonView: View {
     /// preventing VoiceOver from auto-announcing the state change before our
     /// custom message finishes.
     @State private var labelOverride: Bool? = nil
+    @AppStorage("hasSeenFavouritesHint") private var hasSeenFavouritesHint = false
 
     private var isFavourite: Bool { viewModel.isFavourite(talk: talk) }
     /// Drives the accessibility label and selected trait — frozen during the
@@ -36,9 +37,14 @@ struct FavouriteButtonView: View {
                 AccessibilityAnnouncer.shared.announce("Removed from favourites.")
             } else {
                 viewModel.addFavourite(talk: talk)
-                AccessibilityAnnouncer.shared.announce(
-                    "Added to favourites. Switch to My Schedule to see all your saved sessions."
-                )
+                if hasSeenFavouritesHint {
+                    AccessibilityAnnouncer.shared.announce("Added to favourites.")
+                } else {
+                    AccessibilityAnnouncer.shared.announce(
+                        "Added to favourites. Switch to My Schedule to see all your saved sessions."
+                    )
+                    hasSeenFavouritesHint = true
+                }
             }
 
             // Release the freeze after the announcement (plus retry window)
@@ -50,7 +56,14 @@ struct FavouriteButtonView: View {
             }
         } label: {
             Image(systemName: isFavourite ? "star.fill" : "star")
-                .foregroundStyle(isFavourite ? .yellow : .secondary)
+                .font(.title3)
+                .foregroundStyle(isFavourite ? .orange : .primary)
+                .symbolEffect(.bounce, value: isFavourite)
+                .padding(8)
+                // Material backing keeps the star legible against tinted
+                // session-type card backgrounds (especially the yellow
+                // lightning-talks tint where a yellow star would vanish).
+                .background(Circle().fill(.regularMaterial))
         }
         .frame(minWidth: 88, minHeight: 88, alignment: .bottomTrailing)
         .contentShape(Rectangle())

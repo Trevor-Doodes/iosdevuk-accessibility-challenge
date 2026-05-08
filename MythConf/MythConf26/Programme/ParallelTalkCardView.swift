@@ -10,6 +10,7 @@ struct ParallelTalkCardView: View {
     @Environment(ViewModel.self) private var viewModel
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     let talkID: UUID
     let session: Session
     /// Reserved bottom space inside the card so the favourite star icon
@@ -36,11 +37,11 @@ struct ParallelTalkCardView: View {
                             .multilineTextAlignment(.leading)
                         Text(viewModel.speakersFrom(talkID: talkID))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .contrastAdaptiveSecondary()
                             .multilineTextAlignment(.leading)
                         Text(viewModel.locationNameFrom(talkID: talkID))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .contrastAdaptiveSecondary()
                         // Space reserved so the overlay star icon doesn't sit on
                         // top of the location text. The button's invisible hit
                         // area extends further up but doesn't push layout.
@@ -53,13 +54,14 @@ struct ParallelTalkCardView: View {
             .background(session.sessionType.color.opacity(cardOpacity), in: .rect(cornerRadius: 10))
             .clipShape(.rect(cornerRadius: 10))
             .overlay(
-                (contrast == .increased || reduceTransparency) ?
+                (contrast == .increased || reduceTransparency || differentiateWithoutColor) ?
                     RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(session.sessionType.color, lineWidth: 1.5)
                         .allowsHitTesting(false) : nil
             )
         }
         .accessibilityLabel("\(session.sessionType.displayName) from \(session.startTimeText) to \(session.endTimeText): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
+        .accessibilityHint("Opens session details")
         .accessibilityInputLabels([viewModel.talkTitleFrom(talkID: talkID)])
         .buttonStyle(.plain)
         .overlay(alignment: .bottomTrailing) {

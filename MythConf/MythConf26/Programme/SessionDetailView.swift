@@ -18,13 +18,15 @@ struct SessionDetailView: View {
                 // Time and location
                 HStack {
                     Label(session.timeRange, systemImage: "clock")
+                        .accessibilityLabel("Time \(session.timeRange)")
                     Spacer()
                     NavigationLink(value: LocationNavigationID(value: talk.locationID)) {
                         Label(viewModel.locationNameFrom(locationID: talk.locationID), systemImage: "mappin")
                     }
+                    .accessibilityHint("Opens venue details and map")
                 }
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .contrastAdaptiveSecondary()
                 .padding(.bottom)
 
                 // Speakers
@@ -37,6 +39,7 @@ struct SessionDetailView: View {
 
                 Divider()
                     .padding(.vertical)
+                    .accessibilityHidden(true)
 
                 // Abstract
                 Text(talk.talkDescription)

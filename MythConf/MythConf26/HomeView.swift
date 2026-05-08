@@ -12,15 +12,19 @@ struct HomeView: View {
         TabView {
             Tab("Programme", systemImage: "calendar") {
                 ProgrammeView()
+                    .accessibilityInputLabels(["Programme", "Schedule", "Sessions"])
             }
             Tab("Speakers", systemImage: "person.2") {
                 SpeakersView()
+                    .accessibilityInputLabels(["Speakers", "People"])
             }
             Tab("Locations", systemImage: "map") {
                 LocationsView()
+                    .accessibilityInputLabels(["Locations", "Map", "Venues"])
             }
             Tab("My Schedule", systemImage: "star") {
                 MyScheduleView()
+                    .accessibilityInputLabels(["My Schedule", "Favourites", "Saved"])
             }
         }
     }

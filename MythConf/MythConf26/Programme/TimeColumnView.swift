@@ -19,7 +19,7 @@ struct TimeColumnView: View {
                 .bold()
                 .monospacedDigit()
             Text(endTime)
-                .foregroundStyle(.secondary)
+                .contrastAdaptiveSecondary()
                 .monospacedDigit()
         }
         .font(.caption)

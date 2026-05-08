@@ -35,7 +35,7 @@ struct LocationDetailView: View {
                 .accessibilityHint("Scroll down for a text description of this venue.")
 
                 Text(location.placeDescription)
-                    .foregroundStyle(.secondary)
+                    .contrastAdaptiveSecondary()
                     .padding()
             }
         }

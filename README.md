@@ -42,6 +42,15 @@ The session time was previously rendered in a separate left-hand column outside 
 **Talk card layout scales with Dynamic Type** (`ParallelTalkCardView`, `TimeColumnView`)\
 The time column inside each talk card uses `@ScaledMetric` so its minimum width grows with the user's chosen text size, preventing the start and end times from truncating at AX text sizes. The reserved space at the bottom of each card (kept clear so the favourite star is not on top of the location text) also scales with Dynamic Type so the icon stays out of the way at every size.
 
+**Secondary text adapts to Increase Contrast** (`ParallelTalkCardView`, `BreakRowView`, `TimeColumnView`, `SpeakerRowView`, `TalkSummaryView`, `LocationsView`, `LocationDetailView`, `SessionDetailView`)\
+A reusable `contrastAdaptiveSecondary()` modifier replaces every `.foregroundStyle(.secondary)` on text that sits on tinted backgrounds. With Increase Contrast off, the system secondary colour is preserved for visual hierarchy. With Increase Contrast on, the text lifts to `.primary`, comfortably clearing the WCAG 4.5:1 contrast ratio against the 25%-opacity card background.
+
+**Differentiate Without Color** (`SessionType`, `BreakRowView`, `ParallelTalkCardView`)\
+Each session type now has an associated SF Symbol (`cup.and.saucer` for tea, `fork.knife` for lunch, `train.side.front.car` for the rail trip, and so on). The break row shows the symbol alongside the type name as a permanent shape-based cue. When the user enables Differentiate Without Color, talk cards and break rows additionally render a stroked colour border so session type can be distinguished by shape and outline rather than fill alone.
+
+**Favourite star backed by material for legibility on tinted cards** (`FavouriteButtonView`)\
+The yellow star previously sat directly on the tinted card background and could vanish on lightning-talk cards (yellow on yellow). The star now sits on a circular `.regularMaterial` backing with a more contrasty orange fill, keeping it readable on every session-type colour while preserving the conventional gold-star metaphor for "favourite".
+
 ### Mobility
 
 **Favourite button has an enlarged touch target** (`FavouriteButtonView`)\
@@ -56,6 +65,9 @@ Voice Control users can activate the favourite button by saying "Tap Favourite",
 **Voice Control input label on talk cards** (`ParallelTalkCardView`)\
 The card's full accessibility label is over seventy characters long (session type + time + title + speakers + location). `.accessibilityInputLabels` has been set to just the talk title so a Voice Control user can say "Tap [Talk Title]" instead.
 
+**Tab bar input labels** (`HomeView`)\
+Each tab carries multiple natural input labels — "Programme" / "Schedule" / "Sessions", "Speakers" / "People", "Locations" / "Map" / "Venues", "My Schedule" / "Favourites" / "Saved" — so a Voice Control user can say whichever phrase comes naturally to them rather than having to remember the exact tab title.
+
 ### Cognitive
 
 **Section headings announce as headers** (`SpeakerDetailView`, `MyScheduleView`)\
@@ -69,6 +81,15 @@ When a talk is currently a favourite, the button carries the `.isSelected` acces
 
 **Voice Control input labels for composite rows** (`SpeakerRowView`, `TalkSummaryView`)\
 After grouping rows into single combined elements, Voice Control users activate them by speaking a label. `.accessibilityInputLabels` has been set to the speaker name and talk title respectively, so users can say the shortest, most natural command (e.g. "tap Jane Smith") rather than having to speak a long combined description.
+
+**Hints across navigable rows** (`SpeakerRowView`, `TalkSummaryView`, `ParallelTalkCardView`, `LocationsView`, `SessionDetailView`)\
+Every navigable row now has an `.accessibilityHint` describing the consequence of activating it: "Opens speaker profile", "Opens session details", "Opens venue details and map". This sets the user's expectation before they double-tap, reducing the cognitive load of figuring out where each control will take them.
+
+**Adaptive announcement on first favourite** (`FavouriteButtonView`)\
+The "Switch to My Schedule…" guidance is helpful the first time a user adds a favourite but becomes verbose noise on every subsequent action. A persisted `hasSeenFavouritesHint` flag means the long form is spoken once per app install; afterwards, adds are confirmed with a concise "Added to favourites." Removes are always concise.
+
+**Search announces result count** (`SpeakersView`)\
+When a user types in the speakers search field, the count of matching speakers is announced via `AccessibilityAnnouncer` (e.g. "12 speakers match"). VoiceOver users get immediate feedback on how their query is narrowing without having to navigate into the list to count results.
 
 ### Hearing (bonus)
 
