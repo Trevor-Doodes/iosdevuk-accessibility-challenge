@@ -36,7 +36,7 @@ struct ParallelTalkCardView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                     // Space reserved so the overlay button doesn't obscure text
-                    Color.clear.frame(height: 44)
+                    Color.clear.frame(height: 88)
                 }
                 .padding()
             }
