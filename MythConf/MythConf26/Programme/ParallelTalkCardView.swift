@@ -34,9 +34,10 @@ struct ParallelTalkCardView: View {
                     Text(viewModel.locationNameFrom(talkID: talkID))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Spacer()
-                    // Space reserved so the overlay button doesn't obscure text
-                    Color.clear.frame(height: 88)
+                    // Space reserved so the overlay star icon doesn't sit on
+                    // top of the location text. The button's invisible hit
+                    // area extends further up but doesn't push layout.
+                    Color.clear.frame(height: 28)
                 }
                 .padding()
             }

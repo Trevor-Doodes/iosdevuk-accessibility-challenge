@@ -48,7 +48,8 @@ struct FavouriteButtonView: View {
             Image(systemName: isFavourite ? "star.fill" : "star")
                 .foregroundStyle(isFavourite ? .yellow : .secondary)
         }
-        .frame(minWidth: 88, minHeight: 88)
+        .frame(minWidth: 88, minHeight: 88, alignment: .bottomTrailing)
+        .contentShape(Rectangle())
         .accessibilityLabel(labelIsFavourite ? "Remove from favourites" : "Add to favourites")
         .sensoryFeedback(.success, trigger: isFavourite)
     }
