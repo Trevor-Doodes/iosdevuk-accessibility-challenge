@@ -26,20 +26,22 @@ struct DayScheduleView: View {
             return SessionRotorEntry(id: session.id, label: label)
         }
 
-        ScrollView {
-            VStack(spacing: 0) {
-                ForEach(sessions) { session in
-                    if session.containsTalk {
-                        ParallelSessionsRowView(session: session)
-                            .id(session.id)
-                    } else {
-                        BreakRowView(session: session)
-                    }
-                    Divider()
-                        .accessibilityHidden(true)
+        List {
+            ForEach(sessions) { session in
+                if session.containsTalk {
+                    ParallelSessionsRowView(session: session)
+                        .id(session.id)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                } else {
+                    BreakRowView(session: session)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .accessibilityRotor("Favourite Sessions", entries: rotorEntries, entryLabel: \.label)
     }
 }
