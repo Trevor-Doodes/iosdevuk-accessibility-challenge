@@ -22,27 +22,26 @@ struct ParallelTalkCardView: View {
                     .frame(height: 4)
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading) {
-                    Text("\(session.startTimeText)–\(session.endTimeText)")
-                        .font(.caption2)
-                        .bold()
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                    Text(viewModel.talkTitleFrom(talkID: talkID))
-                        .bold()
-                        .font(.subheadline)
-                        .multilineTextAlignment(.leading)
-                    Text(viewModel.speakersFrom(talkID: talkID))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                    Text(viewModel.locationNameFrom(talkID: talkID))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    // Space reserved so the overlay star icon doesn't sit on
-                    // top of the location text. The button's invisible hit
-                    // area extends further up but doesn't push layout.
-                    Color.clear.frame(height: 28)
+                HStack(alignment: .top) {
+                    TimeColumnView(startTime: session.startTimeText, endTime: session.endTimeText)
+
+                    VStack(alignment: .leading) {
+                        Text(viewModel.talkTitleFrom(talkID: talkID))
+                            .bold()
+                            .font(.subheadline)
+                            .multilineTextAlignment(.leading)
+                        Text(viewModel.speakersFrom(talkID: talkID))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                        Text(viewModel.locationNameFrom(talkID: talkID))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        // Space reserved so the overlay star icon doesn't sit on
+                        // top of the location text. The button's invisible hit
+                        // area extends further up but doesn't push layout.
+                        Color.clear.frame(height: 28)
+                    }
                 }
                 .padding()
             }
