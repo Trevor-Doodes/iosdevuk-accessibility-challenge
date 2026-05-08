@@ -15,10 +15,17 @@ struct FavouriteButtonView: View {
         Button {
             if viewModel.isFavourite(talk: talk) {
                 viewModel.removeFavourite(talk: talk)
-                UIAccessibility.post(notification: .announcement, argument: "Removed from favourites.")
             } else {
                 viewModel.addFavourite(talk: talk)
-                UIAccessibility.post(notification: .announcement, argument: "Added to favourites. Switch to My Schedule to see all your saved sessions.")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+                    UIAccessibility.post(
+                        notification: .announcement,
+                        argument: NSAttributedString(
+                            string: "Added to My Schedule.",
+                            attributes: [.accessibilitySpeechQueueAnnouncement: true]
+                        )
+                    )
+                }
             }
         } label: {
             Image(systemName: viewModel.isFavourite(talk: talk) ? "star.fill" : "star")
