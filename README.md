@@ -44,8 +44,8 @@ The favourite star button inside each talk card created a second, redundant focu
 **Favourite button meets the 44×44-point minimum touch target** (`FavouriteButtonView`)\
 The star icon button was smaller than Apple's recommended 44×44-point minimum tap area. A minimum frame has been applied so users with reduced dexterity can reliably activate it.
 
-**VoiceOver rotor for Favourite Sessions** (`DayScheduleView`, `ParallelTalkCardView`)\
-A custom VoiceOver rotor named "Favourite Sessions" has been added to the programme schedule. Users can twist the VoiceOver rotor to select "Favourite Sessions" and then swipe to jump directly from one starred talk to the next, skipping all other sessions. This removes the need to navigate every row in a busy schedule just to find saved talks.
+**Accessibility announcement on favourite toggle** (`FavouriteButtonView`)\
+When a talk is added to favourites, VoiceOver announces "Added to favourites. Switch to My Schedule to see all your saved sessions." When removed, it announces "Removed from favourites." This gives VoiceOver users immediate confirmation of the action and directs them to the My Schedule tab, which already shows all saved sessions in order — achieving the same goal as in-list navigation without relying on complex rotor mechanics.
 
 ### Cognitive
 
@@ -70,5 +70,5 @@ A success haptic fires each time a talk is added to or removed from favourites. 
 **Favourite button independently focusable by VoiceOver** (`ParallelTalkCardView`)\
 The favourite star button was originally nested inside the talk card's `NavigationLink` label and hidden from VoiceOver, with the toggle exposed only as a custom accessibility action. Custom actions require the VoiceOver Actions rotor — a non-obvious gesture that most users will not discover. The button has been moved into an overlay on the card so it sits alongside the `NavigationLink` as a sibling element. Both can now be focused and double-tapped independently: the card navigates to the session detail, the button toggles the favourite.
 
-**Favourite Sessions rotor now jumps correctly between starred talks** (`DayScheduleView`)\
-The programme schedule used a `LazyVStack` which only renders rows currently visible on screen. Off-screen talk cards had not yet registered their rotor entries, so VoiceOver fell back to sequential row navigation instead of jumping to favourites. Switching to a plain `VStack` ensures all rows are in the accessibility tree upfront. A conference day has at most around 30 rows, so there is no meaningful performance cost to rendering them all at once.
+**Favourite button independently focusable by VoiceOver — overlay approach** (`ParallelTalkCardView`)\
+After moving the favourite button to an overlay sibling of the `NavigationLink`, the programme schedule has been restored to `LazyVStack` for performance. The button is reliably focusable and activatable by VoiceOver as a separate element from the card.
