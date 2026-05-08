@@ -23,6 +23,11 @@ struct ParallelTalkCardView: View {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading) {
+                    Text("\(session.startTimeText)–\(session.endTimeText)")
+                        .font(.caption2)
+                        .bold()
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
                     Text(viewModel.talkTitleFrom(talkID: talkID))
                         .bold()
                         .font(.subheadline)
@@ -51,7 +56,7 @@ struct ParallelTalkCardView: View {
                         .allowsHitTesting(false) : nil
             )
         }
-        .accessibilityLabel("\(session.sessionType.displayName): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
+        .accessibilityLabel("\(session.sessionType.displayName) from \(session.startTimeText) to \(session.endTimeText): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
         .buttonStyle(.plain)
         .overlay(alignment: .bottomTrailing) {
             FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))

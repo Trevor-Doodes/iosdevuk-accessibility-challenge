@@ -36,6 +36,9 @@ Horizontal divider lines are decorative separators with no semantic meaning. The
 **Speaker rows and talk summary cards read as single elements** (`SpeakerRowView`, `TalkSummaryView`)\
 A speaker row (photo + name + bio excerpt) and a talk summary card (title + time + location) each previously fragmented into multiple separate VoiceOver focus stops. Each composite element is now grouped so VoiceOver reads all the information in a single announcement, reducing the effort needed to scan a list.
 
+**Talk card includes time so VoiceOver gives complete information on focus** (`ParallelTalkCardView`, `ParallelSessionsRowView`)\
+The session time was previously rendered in a separate left-hand column outside each talk card, so VoiceOver users had to focus the time element and the card element separately to understand a row. The time has been moved to the top-left of each card, the time column has been removed, and the card's accessibility label now reads "Talk from 09:30 to 10:15: [title], by [speakers], [location]" — giving the full context in a single focus stop.
+
 **Nested favourite button hidden inside talk cards** (`ParallelTalkCardView`)\
 The favourite star button inside each talk card created a second, redundant focusable element inside the card. The card already exposes an accessible custom action ("Add to favourites" / "Remove from favourites"), so the inner button is now hidden from VoiceOver to remove the duplication.
 
