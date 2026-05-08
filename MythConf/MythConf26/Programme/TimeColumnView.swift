@@ -9,6 +9,9 @@ import SwiftUI
 struct TimeColumnView: View {
     let startTime: String
     let endTime: String
+    /// Scales with Dynamic Type so the time column doesn't truncate at
+    /// larger accessibility text sizes.
+    @ScaledMetric(relativeTo: .caption) private var columnWidth: CGFloat = 44
 
     var body: some View {
         VStack(alignment: .trailing) {
@@ -20,7 +23,8 @@ struct TimeColumnView: View {
                 .monospacedDigit()
         }
         .font(.caption)
-        .frame(width: 44, alignment: .trailing)
+        .frame(minWidth: columnWidth, alignment: .trailing)
+        .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Session start time \(startTime), session end time \(endTime)")
     }

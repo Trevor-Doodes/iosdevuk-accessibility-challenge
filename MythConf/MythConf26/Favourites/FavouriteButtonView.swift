@@ -10,22 +10,25 @@ import UIKit
 struct FavouriteButtonView: View {
     @Environment(ViewModel.self) private var viewModel
     let talk: Talk
-    /// When non-nil, overrides the displayed state so the label stays
-    /// frozen during the announcement sequence, preventing VoiceOver from
-    /// auto-announcing the state change before our custom message finishes.
+    /// When non-nil, overrides the displayed accessibility state so the label
+    /// and selected trait stay frozen during the announcement sequence,
+    /// preventing VoiceOver from auto-announcing the state change before our
+    /// custom message finishes.
     @State private var labelOverride: Bool? = nil
 
     private var isFavourite: Bool { viewModel.isFavourite(talk: talk) }
-    /// Drives the accessibility label only — frozen during the announcement
-    /// window so VoiceOver does not auto-read the new label mid-announcement.
+    /// Drives the accessibility label and selected trait — frozen during the
+    /// announcement window so VoiceOver does not auto-read the new state
+    /// mid-announcement.
     private var labelIsFavourite: Bool { labelOverride ?? isFavourite }
 
     var body: some View {
         Button {
             let wasAlreadyFavourite = isFavourite
 
-            // Freeze the label at the pre-tap state so VoiceOver does not
-            // auto-announce the change while our custom message is queued.
+            // Freeze the accessibility state at the pre-tap value so VoiceOver
+            // does not auto-announce the change while our custom message is
+            // queued.
             labelOverride = wasAlreadyFavourite
 
             if wasAlreadyFavourite {
@@ -38,9 +41,10 @@ struct FavouriteButtonView: View {
                 )
             }
 
-            // Release the freeze after the announcement (plus retry window) has
-            // had time to play. If VoiceOver is still focused on this button it
-            // will then naturally re-read the element with its updated label.
+            // Release the freeze after the announcement (plus retry window)
+            // has had time to play. If VoiceOver is still focused on this
+            // button it will then naturally re-read the element with its
+            // updated label and selected state.
             DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                 labelOverride = nil
             }
@@ -51,6 +55,11 @@ struct FavouriteButtonView: View {
         .frame(minWidth: 88, minHeight: 88, alignment: .bottomTrailing)
         .contentShape(Rectangle())
         .accessibilityLabel(labelIsFavourite ? "Remove from favourites" : "Add to favourites")
-        .sensoryFeedback(.success, trigger: isFavourite)
+        .accessibilityHint(labelIsFavourite ? "Removes this session from your saved schedule" : "Adds this session to your saved schedule")
+        .accessibilityAddTraits(labelIsFavourite ? .isSelected : [])
+        .accessibilityInputLabels(["Favourite", "Star", "Save"])
+        .sensoryFeedback(trigger: isFavourite) { _, newValue in
+            newValue ? .success : .impact(weight: .light)
+        }
     }
 }

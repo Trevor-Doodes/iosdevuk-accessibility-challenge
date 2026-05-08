@@ -39,8 +39,8 @@ A speaker row (photo + name + bio excerpt) and a talk summary card (title + time
 **Talk card includes time so VoiceOver gives complete information on focus** (`ParallelTalkCardView`, `ParallelSessionsRowView`)\
 The session time was previously rendered in a separate left-hand column outside each talk card, so VoiceOver users had to focus the time element and the card element separately to understand a row. The time has been moved to the top-left of each card, the time column has been removed, and the card's accessibility label now reads "Talk from 09:30 to 10:15: [title], by [speakers], [location]" — giving the full context in a single focus stop.
 
-**Nested favourite button hidden inside talk cards** (`ParallelTalkCardView`)\
-The favourite star button inside each talk card created a second, redundant focusable element inside the card. The card already exposes an accessible custom action ("Add to favourites" / "Remove from favourites"), so the inner button is now hidden from VoiceOver to remove the duplication.
+**Talk card layout scales with Dynamic Type** (`ParallelTalkCardView`, `TimeColumnView`)\
+The time column inside each talk card uses `@ScaledMetric` so its minimum width grows with the user's chosen text size, preventing the start and end times from truncating at AX text sizes. The reserved space at the bottom of each card (kept clear so the favourite star is not on top of the location text) also scales with Dynamic Type so the icon stays out of the way at every size.
 
 ### Mobility
 
@@ -50,6 +50,12 @@ The star icon button was smaller than Apple's recommended 44×44-point minimum t
 **Accessibility announcement on favourite toggle** (`FavouriteButtonView`)\
 When a talk is added to favourites, VoiceOver announces "Added to favourites. Switch to My Schedule to see all your saved sessions." When removed, it announces "Removed from favourites." This gives VoiceOver users immediate confirmation of the action and directs them to the My Schedule tab, which already shows all saved sessions in order — achieving the same goal as in-list navigation without relying on complex rotor mechanics.
 
+**Voice Control input label on the favourite button** (`FavouriteButtonView`)\
+Voice Control users can activate the favourite button by saying "Tap Favourite", "Tap Star", or "Tap Save" rather than having to recite the full accessibility label. When several talk cards are visible Voice Control will number them automatically.
+
+**Voice Control input label on talk cards** (`ParallelTalkCardView`)\
+The card's full accessibility label is over seventy characters long (session type + time + title + speakers + location). `.accessibilityInputLabels` has been set to just the talk title so a Voice Control user can say "Tap [Talk Title]" instead.
+
 ### Cognitive
 
 **Section headings announce as headers** (`SpeakerDetailView`, `MyScheduleView`)\
@@ -58,13 +64,16 @@ The "Sessions" heading on speaker detail pages and the day headings on My Schedu
 **Social links hint that they open externally** (`SocialLinksView`)\
 Each social or website link on a speaker's profile now has the hint "Opens in browser". This sets the user's expectation before they activate the link, avoiding confusion when they are taken out of the app.
 
+**Favourite button announces selected state and explains its action** (`FavouriteButtonView`)\
+When a talk is currently a favourite, the button carries the `.isSelected` accessibility trait so VoiceOver appends "Selected" to its announcement, giving users a quick read on the talk's saved status without having to interpret the icon. The button also has a hint ("Adds this session to your saved schedule" / "Removes this session from your saved schedule") so users understand the consequence of activating it before they double-tap.
+
 **Voice Control input labels for composite rows** (`SpeakerRowView`, `TalkSummaryView`)\
 After grouping rows into single combined elements, Voice Control users activate them by speaking a label. `.accessibilityInputLabels` has been set to the speaker name and talk title respectively, so users can say the shortest, most natural command (e.g. "tap Jane Smith") rather than having to speak a long combined description.
 
 ### Hearing (bonus)
 
-**Haptic feedback when toggling a favourite** (`FavouriteButtonView`)\
-A success haptic fires each time a talk is added to or removed from favourites. This provides a tactile confirmation of the action for users who may not be relying on visual feedback alone, and is a non-auditory equivalent to a sound cue.
+**Differentiated haptic feedback when toggling a favourite** (`FavouriteButtonView`)\
+A `.success` haptic fires when a talk is added to favourites, and a lighter `.impact(weight: .light)` haptic fires when a talk is removed. Two distinct tactile patterns let a user without sight or sound tell whether the action added or removed the talk, rather than just confirming that something happened. This is a non-auditory equivalent to a paired sound cue.
 
 ---
 

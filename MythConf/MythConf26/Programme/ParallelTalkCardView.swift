@@ -12,6 +12,10 @@ struct ParallelTalkCardView: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let talkID: UUID
     let session: Session
+    /// Reserved bottom space inside the card so the favourite star icon
+    /// doesn't sit on top of the location text. Scales with Dynamic Type so
+    /// the icon stays clear at larger text sizes.
+    @ScaledMetric(relativeTo: .caption) private var starReservedHeight: CGFloat = 28
 
     private var cardOpacity: Double { (contrast == .increased || reduceTransparency) ? 0.25 : 0.1 }
 
@@ -40,7 +44,7 @@ struct ParallelTalkCardView: View {
                         // Space reserved so the overlay star icon doesn't sit on
                         // top of the location text. The button's invisible hit
                         // area extends further up but doesn't push layout.
-                        Color.clear.frame(height: 28)
+                        Color.clear.frame(height: starReservedHeight)
                     }
                 }
                 .padding()
@@ -56,6 +60,7 @@ struct ParallelTalkCardView: View {
             )
         }
         .accessibilityLabel("\(session.sessionType.displayName) from \(session.startTimeText) to \(session.endTimeText): \(viewModel.talkTitleFrom(talkID: talkID)), by \(viewModel.speakersFrom(talkID: talkID)), \(viewModel.locationNameFrom(talkID: talkID))")
+        .accessibilityInputLabels([viewModel.talkTitleFrom(talkID: talkID)])
         .buttonStyle(.plain)
         .overlay(alignment: .bottomTrailing) {
             FavouriteButtonView(talk: viewModel.talkFrom(talkID: talkID))
