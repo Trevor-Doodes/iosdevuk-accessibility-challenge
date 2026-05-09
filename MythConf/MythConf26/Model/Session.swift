@@ -32,15 +32,20 @@ struct Session: Codable, Identifiable, Hashable {
     }
 
     /// Time string optimised for VoiceOver. The visible `startTimeText` uses
-    /// a two-digit zero-padded hour ("09:30") which speech engines often
-    /// read with a pause between hour and minutes ("zero nine, thirty").
-    /// The shortened locale time format ("9:30 am") is read naturally.
+    /// `09:30`; speech engines treat the colon as a punctuation break and
+    /// pause between the hour and minutes ("nine, thirty"). Stripping the
+    /// colon to a plain space ("9 30 am") makes VoiceOver read the time
+    /// as a flowing phrase ("nine thirty AM").
     var startTimeAccessibilityText: String {
-        startTime.formatted(date: .omitted, time: .shortened)
+        startTime
+            .formatted(date: .omitted, time: .shortened)
+            .replacingOccurrences(of: ":", with: " ")
     }
 
     var endTimeAccessibilityText: String {
-        endTime.formatted(date: .omitted, time: .shortened)
+        endTime
+            .formatted(date: .omitted, time: .shortened)
+            .replacingOccurrences(of: ":", with: " ")
     }
 
     var timeRange: String { "\(startTimeText) – \(endTimeText)" }
