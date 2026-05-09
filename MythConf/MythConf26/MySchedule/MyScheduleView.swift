@@ -24,17 +24,7 @@ struct MyScheduleView: View {
                                 let daySessions = viewModel.favouritesBySession[dayIndex]
                                 if daySessions.first?.sessionType != .dummy {
                                     Section {
-                                        ForEach(daySessions) { session in
-                                            // VStack wrap disambiguates SwiftUI's ForEach overload
-                                            // resolution under Xcode 16 SDKs. A multi-child closure
-                                            // body — and even Group, which has a MapContent
-                                            // conformance — otherwise resolves to MapContentBuilder.
-                                            VStack(spacing: 0) {
-                                                ParallelSessionsRowView(session: session)
-                                                Divider()
-                                                    .accessibilityHidden(true)
-                                            }
-                                        }
+                                        FavouriteDaySessionList(sessions: daySessions)
                                     } header: {
                                         Text(dayHeader(for: daySessions))
                                             .font(.headline)
@@ -59,6 +49,22 @@ struct MyScheduleView: View {
     private func dayHeader(for sessions: [Session]) -> String {
         guard let first = sessions.first else { return "" }
         return first.startTime.formatted(.dateTime.weekday(.wide).day().month(.wide))
+    }
+}
+
+/// Renders the parallel-session rows for a single day. Extracted into its
+/// own `View` so its `body` is unambiguously evaluated in SwiftUI's
+/// `ViewBuilder` context — inlining the ForEach inside `Section { ... }`
+/// caused Xcode 16 to resolve it to `MapContentBuilder`.
+private struct FavouriteDaySessionList: View {
+    let sessions: [Session]
+
+    var body: some View {
+        ForEach(sessions) { session in
+            ParallelSessionsRowView(session: session)
+            Divider()
+                .accessibilityHidden(true)
+        }
     }
 }
 
