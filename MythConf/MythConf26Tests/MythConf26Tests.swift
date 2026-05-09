@@ -74,7 +74,7 @@ struct FavouritesTests {
     /// `favouritesBySession` powers My Schedule. After adding a talk, the
     /// flattened list of session content IDs across all days must contain
     /// that talk.
-    @Test func favouritesBySessionReflectsAddedTalk() {
+    @Test @MainActor func favouritesBySessionReflectsAddedTalk() {
         viewModel.addFavourite(talk: talk)
 
         let allFavouriteContentIDs = viewModel.favouritesBySession
@@ -164,7 +164,7 @@ struct TalkCardAccessibilityLabelTests {
         let label = viewModel.talkCardAccessibilityLabel(talkID: talkID, in: session)
 
         #expect(label.hasPrefix("\(session.sessionType.displayName) from "))
-        #expect(label.contains(" from \(session.startTimeText) to \(session.endTimeText): "))
+        #expect(label.contains(" from \(session.startTimeAccessibilityText) to \(session.endTimeAccessibilityText): "))
         #expect(label.contains(", by "))
         // The closing comma + location must be the final clause.
         let location = viewModel.locationNameFrom(talkID: talkID)

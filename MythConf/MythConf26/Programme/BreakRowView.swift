@@ -17,7 +17,12 @@ struct BreakRowView: View {
 
     var body: some View {
         HStack {
-            TimeColumnView(startTime: session.startTimeText, endTime: session.endTimeText)
+            TimeColumnView(
+                startTime: session.startTimeText,
+                endTime: session.endTimeText,
+                startTimeAccessibility: session.startTimeAccessibilityText,
+                endTimeAccessibility: session.endTimeAccessibilityText
+            )
 
             VStack(alignment: .leading) {
                 HStack(spacing: 8) {
@@ -51,6 +56,6 @@ struct BreakRowView: View {
                     .allowsHitTesting(false) : nil
         )
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(session.sessionType.displayName), \(session.startTimeText) to \(session.endTimeText)")
+        .accessibilityLabel("\(session.sessionType.displayName), \(session.startTimeAccessibilityText) to \(session.endTimeAccessibilityText)")
     }
 }

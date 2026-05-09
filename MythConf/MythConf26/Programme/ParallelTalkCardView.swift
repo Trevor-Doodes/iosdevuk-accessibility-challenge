@@ -28,7 +28,12 @@ struct ParallelTalkCardView: View {
                     .accessibilityHidden(true)
 
                 HStack(alignment: .top) {
-                    TimeColumnView(startTime: session.startTimeText, endTime: session.endTimeText)
+                    TimeColumnView(
+                        startTime: session.startTimeText,
+                        endTime: session.endTimeText,
+                        startTimeAccessibility: session.startTimeAccessibilityText,
+                        endTimeAccessibility: session.endTimeAccessibilityText
+                    )
 
                     VStack(alignment: .leading) {
                         Text(viewModel.talkTitleFrom(talkID: talkID))

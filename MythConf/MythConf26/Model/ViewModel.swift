@@ -110,13 +110,17 @@ class ViewModel {
     /// regressions — every word, comma, and connective in the spoken
     /// sentence matters for VoiceOver clarity.
     ///
+    /// Times use the shortened locale format ("9:30 am") rather than the
+    /// visible two-digit form ("09:30") which speech engines tend to read
+    /// with a pause between hour and minutes.
+    ///
     /// Format: "[Type] from [start] to [end]: [title], by [speakers], [location]"
     func talkCardAccessibilityLabel(talkID: UUID, in session: Session) -> String {
         let type = session.sessionType.displayName
         let title = talkTitleFrom(talkID: talkID)
         let speakers = speakersFrom(talkID: talkID)
         let location = locationNameFrom(talkID: talkID)
-        return "\(type) from \(session.startTimeText) to \(session.endTimeText): \(title), by \(speakers), \(location)"
+        return "\(type) from \(session.startTimeAccessibilityText) to \(session.endTimeAccessibilityText): \(title), by \(speakers), \(location)"
     }
     
     // Handling favourites
