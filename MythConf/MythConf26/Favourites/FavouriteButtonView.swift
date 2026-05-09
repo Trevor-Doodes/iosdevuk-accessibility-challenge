@@ -15,16 +15,16 @@ struct FavouriteButtonView: View {
     /// would dominate the navigation bar. Defaults to `false` so the talk
     /// card overlay keeps its enlarged Mobility-friendly hit area.
     var compact: Bool = false
-    /// When non-nil, overrides the displayed accessibility state so the label
-    /// and selected trait stay frozen during the announcement sequence,
-    /// preventing VoiceOver from auto-announcing the state change before our
-    /// custom message finishes.
+    /// When non-nil, overrides the displayed accessibility label so it
+    /// stays frozen during the announcement sequence, preventing VoiceOver
+    /// from auto-announcing the state change before our custom message
+    /// finishes.
     @State private var labelOverride: Bool? = nil
     @AppStorage("hasSeenFavouritesHint") private var hasSeenFavouritesHint = false
 
     private var isFavourite: Bool { viewModel.isFavourite(talk: talk) }
-    /// Drives the accessibility label and selected trait — frozen during the
-    /// announcement window so VoiceOver does not auto-read the new state
+    /// Drives the accessibility label — frozen during the announcement
+    /// window so VoiceOver does not auto-read the new state
     /// mid-announcement.
     private var labelIsFavourite: Bool { labelOverride ?? isFavourite }
 
@@ -65,7 +65,6 @@ struct FavouriteButtonView: View {
         .modifier(SizeModifier(compact: compact))
         .accessibilityLabel(labelIsFavourite ? "Remove from favourites" : "Add to favourites")
         .accessibilityHint(labelIsFavourite ? "Removes this session from your saved schedule" : "Adds this session to your saved schedule")
-        .accessibilityAddTraits(labelIsFavourite ? .isSelected : [])
         .accessibilityInputLabels(["Favourite", "Star", "Save"])
         .sensoryFeedback(trigger: isFavourite) { _, newValue in
             newValue ? .success : .impact(weight: .light)

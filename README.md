@@ -29,7 +29,7 @@ A handful of changes warrant separate billing because they go beyond applying a 
 The helper is used both for the favourite-toggle confirmation and for the speaker-search result-count announcement.
 
 **`labelOverride` pattern — coordinating a custom announcement with VoiceOver auto-labels** (`FavouriteButtonView`)\
-When a button's accessibility label changes (e.g. "Add to favourites" → "Remove from favourites"), VoiceOver auto-announces the new label, which would interrupt and overlap the custom message. A `labelOverride: Bool?` state variable freezes the button's accessibility label and `.isSelected` trait at their pre-tap values for four seconds. The custom message plays cleanly; once the freeze lifts, VoiceOver naturally re-reads the button with its updated state if focus remains on it. The icon and colour update instantly — only the spoken label is held — so sighted users never see a delay.
+When a button's accessibility label changes (e.g. "Add to favourites" → "Remove from favourites"), VoiceOver auto-announces the new label, which would interrupt and overlap the custom message. A `labelOverride: Bool?` state variable freezes the button's accessibility label at its pre-tap value for four seconds. The custom message plays cleanly; once the freeze lifts, VoiceOver naturally re-reads the button with its updated label if focus remains on it. The icon and colour update instantly — only the spoken label is held — so sighted users never see a delay.
 
 **Defensive `ViewModel` lookups** (`ViewModel`)\
 The talk, speaker, and location lookup helpers used the `confData.X.filter{ $0.id == id }[0]` pattern, which trap-crashes the entire app on any missing reference. They now use `first(where:)` with safe fallback strings ("Speaker to be announced", "Location to be announced") and an `assertionFailure` so bad references still surface loudly during development. The same change replaces the hand-rolled "A and B" join (which silently truncated talks with three or more speakers) with `formatted(.list(type: .and))`, producing locale-aware "A, B, and C" output.
@@ -100,8 +100,8 @@ The "Sessions" heading on speaker detail pages and the day headings on My Schedu
 **Social links hint that they open externally** (`SocialLinksView`)\
 Each social or website link on a speaker's profile now has the hint "Opens in browser". This sets the user's expectation before they activate the link, avoiding confusion when they are taken out of the app.
 
-**Favourite button announces selected state and explains its action** (`FavouriteButtonView`)\
-When a talk is currently a favourite, the button carries the `.isSelected` accessibility trait so VoiceOver appends "Selected" to its announcement, giving users a quick read on the talk's saved status without having to interpret the icon. The button also has a hint ("Adds this session to your saved schedule" / "Removes this session from your saved schedule") so users understand the consequence of activating it before they double-tap.
+**Favourite button label conveys state and hint explains its action** (`FavouriteButtonView`)\
+The accessibility label flips between "Add to favourites" and "Remove from favourites" so VoiceOver users hear the current state directly without an extra "Selected" announcement on top. The button also carries a hint ("Adds this session to your saved schedule" / "Removes this session from your saved schedule") so users understand the consequence of activating it before they double-tap.
 
 **Voice Control input labels for composite rows** (`SpeakerRowView`, `TalkSummaryView`)\
 After grouping rows into single combined elements, Voice Control users activate them by speaking a label. `.accessibilityInputLabels` has been set to the speaker name and talk title respectively, so users can say the shortest, most natural command (e.g. "tap Jane Smith") rather than having to speak a long combined description.
