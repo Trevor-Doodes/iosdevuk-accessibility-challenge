@@ -216,3 +216,39 @@ struct SessionTypeTests {
         }
     }
 }
+
+/// Tests for the VoiceOver-friendly time formatter on Session. The visible
+/// 24-hour form ("09:30", "14:00") would be read digit-by-digit; the
+/// accessibility form is 12-hour AM/PM with no colon and a special case
+/// for on-the-hour times.
+struct SessionTimeAccessibilityTests {
+    private func session(at hour: Int, minute: Int = 0) -> Session {
+        let date = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 8, hour: hour, minute: minute))!
+        return Session(startTime: date, endTime: date, sessionType: .talk, sessionCount: 1)
+    }
+
+    @Test func morningTimeReadsAsHourMinuteAM() {
+        // 09:30 → "9 30 AM"  (no colon → no punctuation pause)
+        #expect(session(at: 9, minute: 30).startTimeAccessibilityText == "9 30 AM")
+    }
+
+    @Test func afternoonTimeUsesTwelveHourClock() {
+        // 14:00 → "2 PM"  (not "fourteen zero zero")
+        #expect(session(at: 14).startTimeAccessibilityText == "2 PM")
+    }
+
+    @Test func onTheHourDropsMinuteDigits() {
+        // 16:00 → "4 PM"  (not "4 00 PM")
+        #expect(session(at: 16).startTimeAccessibilityText == "4 PM")
+        #expect(session(at: 9).startTimeAccessibilityText == "9 AM")
+    }
+
+    @Test func midnightAndNoonAreReadablyHandled() {
+        #expect(session(at: 0).startTimeAccessibilityText == "12 AM")
+        #expect(session(at: 12).startTimeAccessibilityText == "12 PM")
+    }
+
+    @Test func afternoonHalfHour() {
+        #expect(session(at: 13, minute: 45).startTimeAccessibilityText == "1 45 PM")
+    }
+}
