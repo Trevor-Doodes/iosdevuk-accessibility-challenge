@@ -77,8 +77,8 @@ The yellow star previously sat directly on the tinted card background and could 
 
 ### Mobility
 
-**Favourite button has an enlarged touch target** (`FavouriteButtonView`)\
-The star icon button was smaller than Apple's recommended 44×44-point minimum tap area. A minimum frame of 88×88 points has been applied — double the HIG minimum — so users with reduced dexterity, tremor, or limited fine motor control can comfortably and reliably activate it. The talk card reserves matching space below its text so the larger button does not obscure the title or speaker.
+**Favourite button has an enlarged touch target on the programme list** (`FavouriteButtonView`, `ParallelTalkCardView`)\
+On every talk card in the programme schedule — the high-volume entry point where users scan and favourite multiple sessions in succession — the favourite button uses an 88×88-point hit area, double the HIG minimum. Users with reduced dexterity, tremor, or limited fine motor control can comfortably activate it. The visible star is anchored to the bottom-right corner of the hit area, and the card reserves a small (Dynamic-Type-aware) bottom space so the enlarged target does not bloat the layout. A `compact` variant of the same button is used in the `SessionDetailView` toolbar where conventional iOS toolbar sizing applies; users who need the larger target can still favourite from the programme list at the 88pt size.
 
 **Accessibility announcement on favourite toggle** (`FavouriteButtonView`)\
 When a talk is added to favourites, VoiceOver announces "Added to favourites. Switch to My Schedule to see all your saved sessions." When removed, it announces "Removed from favourites." This gives VoiceOver users immediate confirmation of the action and directs them to the My Schedule tab, which already shows all saved sessions in order — achieving the same goal as in-list navigation without relying on complex rotor mechanics.
