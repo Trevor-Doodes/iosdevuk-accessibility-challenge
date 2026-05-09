@@ -138,3 +138,7 @@ The project includes 15 unit tests (Swift Testing) covering:
 - the contract that every non-dummy `SessionType` has both a display name and an SF Symbol so the shape-based cue is always present.
 
 Run with: `xcodebuild test -project MythConf/MythConf26.xcodeproj -scheme MythConf26 -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`
+
+The same command runs in CI on every push via [`.github/workflows/test.yml`](.github/workflows/test.yml).
+
+Manual on-device validation results — VoiceOver, Voice Control, Increase Contrast, Differentiate Without Color, AX5 Dynamic Type, Reduce Motion, and the Accessibility Inspector audit — are recorded in [`docs/accessibility-audit.md`](docs/accessibility-audit.md).
