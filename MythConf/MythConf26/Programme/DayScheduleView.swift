@@ -13,13 +13,18 @@ struct DayScheduleView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(sessions) { session in
-                    if session.containsTalk {
-                        ParallelSessionsRowView(session: session)
-                    } else {
-                        BreakRowView(session: session)
+                    // Group wrap disambiguates SwiftUI's ForEach overload
+                    // resolution under Xcode 16 SDKs where a multi-child
+                    // closure body otherwise resolves to MapContentBuilder.
+                    Group {
+                        if session.containsTalk {
+                            ParallelSessionsRowView(session: session)
+                        } else {
+                            BreakRowView(session: session)
+                        }
+                        Divider()
+                            .accessibilityHidden(true)
                     }
-                    Divider()
-                        .accessibilityHidden(true)
                 }
             }
         }

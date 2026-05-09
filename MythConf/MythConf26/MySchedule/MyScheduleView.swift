@@ -25,9 +25,14 @@ struct MyScheduleView: View {
                                 if daySessions.first?.sessionType != .dummy {
                                     Section {
                                         ForEach(daySessions) { session in
-                                            ParallelSessionsRowView(session: session)
-                                            Divider()
-                                                .accessibilityHidden(true)
+                                            // Group wrap disambiguates SwiftUI's ForEach overload
+                                            // resolution under Xcode 16 SDKs where a multi-child
+                                            // closure body otherwise resolves to MapContentBuilder.
+                                            Group {
+                                                ParallelSessionsRowView(session: session)
+                                                Divider()
+                                                    .accessibilityHidden(true)
+                                            }
                                         }
                                     } header: {
                                         Text(dayHeader(for: daySessions))
