@@ -18,7 +18,7 @@ struct SessionDetailView: View {
                 // Time and location
                 HStack {
                     Label(session.timeRange, systemImage: "clock")
-                        .accessibilityLabel("Time \(session.timeRange)")
+                        .accessibilityLabel("Time \(session.timeRangeAccessibilityText)")
                     Spacer()
                     NavigationLink(value: LocationNavigationID(value: talk.locationID)) {
                         Label(viewModel.locationNameFrom(locationID: talk.locationID), systemImage: "mappin")

@@ -56,5 +56,13 @@ struct Session: Codable, Identifiable, Hashable {
     }
 
     var timeRange: String { "\(startTimeText) – \(endTimeText)" }
+
+    /// VoiceOver-friendly version of `timeRange`. Uses the natural-language
+    /// 12-hour AM/PM time strings and joins them with " to " so the spoken
+    /// phrase is "9 30 AM to 10 15 AM" rather than "zero nine thirty dash
+    /// ten fifteen".
+    var timeRangeAccessibilityText: String {
+        "\(startTimeAccessibilityText) to \(endTimeAccessibilityText)"
+    }
 }
 

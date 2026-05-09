@@ -17,6 +17,7 @@ struct TalkSummaryView: View {
                 .bold()
             HStack {
                 Label(session.timeRange, systemImage: "clock")
+                    .accessibilityLabel(session.timeRangeAccessibilityText)
                 Label(viewModel.locationNameFrom(talkID: talkID), systemImage: "mappin")
             }
             .font(.caption)
