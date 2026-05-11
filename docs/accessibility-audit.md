@@ -72,14 +72,14 @@ For each screen, walk through with each assistive technology and tick when verif
 | Check | VoiceOver | Voice Control | Increase Contrast | AX5 Dynamic Type |
 |---|---|---|---|---|
 | Title announced as heading | ✅ | n/a | n/a | ☐ |
-| Time and location read clearly | ☐ | n/a | ☐ | ☐ |
+| Time and location read clearly | ✅ | n/a | ☐ | ☐ |
 | Speakers focusable as composite rows | ✅| ☐ | ☐ | ☐ |
 | Description reads as one block | ✅ | n/a | n/a | ☐ |
 | Toolbar favourite button compact, not oversized | n/a | n/a | n/a | ☐ |
 | Toolbar favourite announces selected state | ✅ | n/a | n/a | n/a |
 | Toolbar favourite triggers same announcement | ✅ | n/a | n/a | n/a |
 
-**Notes:**
+**Notes:** Manual VoiceOver pass found the time element only read "Time X to Y" with no venue context; the venue followed as a separate stop. Extended the time's `.accessibilityLabel` in `SessionDetailView.swift` to include the venue name ("Time X to Y, at <venue>") so the two pieces are announced together on first focus, while the venue `NavigationLink` remains a separate, tappable focus stop.
 
 ### Tab bar
 
