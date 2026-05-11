@@ -2,7 +2,7 @@
 
 A structured record of the manual accessibility validation carried out for the iOSDevUK Accessibility Challenge 2026 submission. Code-side improvements are documented in the main [`README.md`](../README.md); this file captures the on-device verification.
 
-**Device:** _e.g. iPhone 15 Pro running iOS 18.x_
+**Device:** _e.g. iPhone 16 running iOS 26.4.2
 **Tester:** Trevor Doodes
 **Date completed:** _YYYY-MM-DD_
 
@@ -16,14 +16,13 @@ For each screen, walk through with each assistive technology and tick when verif
 
 | Check | VoiceOver | Voice Control | Increase Contrast | Differentiate Without Color | AX5 Dynamic Type | Reduce Motion |
 |---|---|---|---|---|---|---|
-| Day picker reads correctly | ☐ | ☐ | ☐ | n/a | ☐ | ☐ |
-| Talk cards read in one focus stop | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Time reads naturally ("from 09:30 to 10:15") | ☐ | n/a | ☐ | n/a | ☐ | n/a |
-| Speakers and location follow the title | ☐ | n/a | n/a | n/a | n/a | n/a |
-| Favourite button focusable separately from card | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+| Day picker reads correctly | ✅ | ☐ | ☐ | n/a | ☐ | ☐ |
+| Talk cards read in one focus stop | ✅| ☐ | ☐ | ☐ | ☐ | ☐ |
+| Time reads naturally ("from 09:30 to 10:15") | ✅ | n/a | ☐ | n/a | ☐ | n/a |
+| Speakers and location follow the title | ✅ | n/a | n/a | n/a | n/a | n/a |
+| Favourite button focusable separately from card | ✅ | ☐ | ☐ | ☐ | ☐ | ☐ |
 | 88pt favourite hit area comfortable | n/a | n/a | n/a | n/a | ☐ | n/a |
-| Favourite announces "Selected" when active | ☐ | n/a | n/a | n/a | n/a | n/a |
-| Custom announcement plays cleanly | ☐ | n/a | n/a | n/a | n/a | n/a |
+| Custom announcement plays cleanly | ✅ | n/a | n/a | n/a | n/a | n/a |
 | Differentiated haptic — add vs remove distinguishable | n/a | n/a | n/a | n/a | n/a | n/a |
 | Break rows show session-type symbol | n/a | n/a | n/a | ☐ | ☐ | n/a |
 | Card border visible | n/a | n/a | ☐ | ☐ | n/a | n/a |
@@ -36,12 +35,12 @@ For each screen, walk through with each assistive technology and tick when verif
 
 | Check | VoiceOver | Voice Control | Increase Contrast | AX5 Dynamic Type |
 |---|---|---|---|---|
-| Speaker rows read as one focus stop | ☐ | ☐ | ☐ | ☐ |
+| Speaker rows read as one focus stop | ✅ | ☐ | ☐ | ☐ |
 | Voice Control activates by speaker name | n/a | ☐ | n/a | n/a |
-| Search field announces result count | ☐ | n/a | n/a | n/a |
+| Search field announces result count | ✅ | n/a | n/a | n/a |
 | Bio text adapts to Increase Contrast | n/a | n/a | ☐ | n/a |
-| Speaker detail "Sessions" announces as heading | ☐ | n/a | n/a | n/a |
-| Social links hint "Opens in browser" | ☐ | n/a | n/a | n/a |
+| Speaker detail "Sessions" announces as heading | ✅ | n/a | n/a | n/a |
+| Social links hint "Opens in browser" | ✅ | n/a | n/a | n/a |
 
 **Notes:**
 
@@ -49,22 +48,22 @@ For each screen, walk through with each assistive technology and tick when verif
 
 | Check | VoiceOver | Voice Control | Increase Contrast | AX5 Dynamic Type |
 |---|---|---|---|---|
-| Location rows read as one focus stop | ☐ | ☐ | ☐ | ☐ |
+| Location rows read as one focus stop |  ✅| ☐ | ☐ | ☐ |
 | Voice Control activates by location name | n/a | ☐ | n/a | n/a |
-| Map labelled with venue name | ☐ | n/a | n/a | n/a |
-| Map hint directs to text description | ☐ | n/a | n/a | n/a |
+| Map labelled with venue name | ✅ | n/a | n/a | n/a |
+| Map hint directs to text description | ✅ | n/a | n/a | n/a |
 | Description text adapts to Increase Contrast | n/a | n/a | ☐ | n/a |
 
-**Notes:**
+**Notes:** During the manual pass the Map was reading its embedded `Marker` ("<venue name>, shows more info") instead of the outer `.accessibilityLabel`/`.accessibilityHint`. Fixed by adding `.accessibilityElement()` ahead of the label and hint in `LocationDetailView.swift` so the marker's accessibility subtree is collapsed and the custom hint ("Scroll down for a text description of this venue.") is what VoiceOver announces.
 
 ### My Schedule tab
 
 | Check | VoiceOver | Voice Control | Increase Contrast | AX5 Dynamic Type |
 |---|---|---|---|---|
-| Empty state reads sensibly | ☐ | n/a | n/a | n/a |
-| Day headings announced as headers | ☐ | n/a | n/a | n/a |
-| Sessions read as on the Programme tab | ☐ | ☐ | ☐ | ☐ |
-| No double-announce when scrolling pinned headers | ☐ | n/a | n/a | n/a |
+| Empty state reads sensibly | ✅ | n/a | n/a | n/a |
+| Day headings announced as headers | ✅ | n/a | n/a | n/a |
+| Sessions read as on the Programme tab | ✅ | ☐ | ☐ | ☐ |
+| No double-announce when scrolling pinned headers | ✅ | n/a | n/a | n/a |
 
 **Notes:**
 
@@ -72,13 +71,13 @@ For each screen, walk through with each assistive technology and tick when verif
 
 | Check | VoiceOver | Voice Control | Increase Contrast | AX5 Dynamic Type |
 |---|---|---|---|---|
-| Title announced as heading | ☐ | n/a | n/a | ☐ |
+| Title announced as heading | ✅ | n/a | n/a | ☐ |
 | Time and location read clearly | ☐ | n/a | ☐ | ☐ |
-| Speakers focusable as composite rows | ☐ | ☐ | ☐ | ☐ |
-| Description reads as one block | ☐ | n/a | n/a | ☐ |
+| Speakers focusable as composite rows | ✅| ☐ | ☐ | ☐ |
+| Description reads as one block | ✅ | n/a | n/a | ☐ |
 | Toolbar favourite button compact, not oversized | n/a | n/a | n/a | ☐ |
-| Toolbar favourite announces selected state | ☐ | n/a | n/a | n/a |
-| Toolbar favourite triggers same announcement | ☐ | n/a | n/a | n/a |
+| Toolbar favourite announces selected state | ✅ | n/a | n/a | n/a |
+| Toolbar favourite triggers same announcement | ✅ | n/a | n/a | n/a |
 
 **Notes:**
 
@@ -86,7 +85,7 @@ For each screen, walk through with each assistive technology and tick when verif
 
 | Check | VoiceOver | Voice Control |
 |---|---|---|
-| Each tab has an item label | ☐ | n/a |
+| Each tab has an item label | ✅ | n/a |
 | Voice Control accepts each natural alias | n/a | ☐ |
 
 **Notes:**
