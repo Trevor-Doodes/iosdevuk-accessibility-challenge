@@ -21,6 +21,7 @@ struct FavouriteButtonView: View {
     /// finishes.
     @State private var labelOverride: Bool? = nil
     @AppStorage("hasSeenFavouritesHint") private var hasSeenFavouritesHint = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var isFavourite: Bool { viewModel.isFavourite(talk: talk) }
     /// Drives the accessibility label — frozen during the announcement
@@ -74,19 +75,34 @@ struct FavouriteButtonView: View {
     @ViewBuilder
     private var iconView: some View {
         if compact {
-            Image(systemName: isFavourite ? "star.fill" : "star")
-                .foregroundStyle(isFavourite ? .orange : .primary)
-                .symbolEffect(.bounce, value: isFavourite)
+            bounceIfMotionAllowed(
+                Image(systemName: isFavourite ? "star.fill" : "star")
+                    .foregroundStyle(isFavourite ? .orange : .primary)
+            )
         } else {
-            Image(systemName: isFavourite ? "star.fill" : "star")
-                .font(.title3)
-                .foregroundStyle(isFavourite ? .orange : .primary)
-                .symbolEffect(.bounce, value: isFavourite)
-                .padding(8)
-                // Material backing keeps the star legible against tinted
-                // session-type card backgrounds (especially the yellow
-                // lightning-talks tint where a yellow star would vanish).
-                .background(Circle().fill(.regularMaterial))
+            bounceIfMotionAllowed(
+                Image(systemName: isFavourite ? "star.fill" : "star")
+                    .font(.title3)
+                    .foregroundStyle(isFavourite ? .orange : .primary)
+            )
+            .padding(8)
+            // Material backing keeps the star legible against tinted
+            // session-type card backgrounds (especially the yellow
+            // lightning-talks tint where a yellow star would vanish).
+            .background(Circle().fill(.regularMaterial))
+        }
+    }
+
+    /// `.symbolEffectsRemoved` only suppresses *indefinite* symbol effects;
+    /// the discrete `.bounce` still plays on value-change. To honour Reduce
+    /// Motion we must keep the `.symbolEffect` modifier out of the view
+    /// tree entirely when the system setting is on.
+    @ViewBuilder
+    private func bounceIfMotionAllowed(_ image: some View) -> some View {
+        if reduceMotion {
+            image
+        } else {
+            image.symbolEffect(.bounce, value: isFavourite)
         }
     }
 
