@@ -5,6 +5,7 @@
 
 import Foundation
 import Testing
+import UIKit
 @testable import MythConf26
 
 /// Tests around the favourites cycle. The favourite button's accessibility
@@ -250,5 +251,206 @@ struct SessionTimeAccessibilityTests {
 
     @Test func afternoonHalfHour() {
         #expect(session(at: 13, minute: 45).startTimeAccessibilityText == "1 45 PM")
+    }
+
+    /// Every real session in the conference data must produce a time-range
+    /// string that obeys the accessibility-time contract: 12-hour AM/PM, no
+    /// colon (which speech engines render as a pause), no leading zero, and
+    /// ending in either " AM" or " PM" — never bare digits.
+    @Test func everySessionInConfDataObeysTimeContract() {
+        let viewModel = ViewModel()
+        for daySessions in viewModel.confData.sessions {
+            for session in daySessions where session.sessionType != .dummy {
+                let text = session.timeRangeAccessibilityText
+                #expect(!text.contains(":"), "Time '\(text)' must not contain a colon")
+                #expect(!text.hasPrefix("0"), "Time '\(text)' must not have a leading zero")
+                #expect(text.hasSuffix(" AM") || text.hasSuffix(" PM"),
+                        "Time '\(text)' must end in AM or PM")
+                #expect(text.contains(" to "), "Time range '\(text)' must contain ' to '")
+            }
+        }
+    }
+}
+
+/// Validates that every `SessionType.symbolName` resolves to a real SF Symbol
+/// at runtime. Catches typos in the symbol catalogue that would otherwise show
+/// as an empty rectangle on screen and an empty image description in
+/// VoiceOver — the same class of bug the Accessibility Inspector flags as a
+/// "potentially decorative image with no label".
+struct SessionTypeSymbolResolutionTests {
+    @Test func everyDeclaredSymbolResolvesToAnSFSymbol() {
+        let typesWithSymbols: [SessionType] = [
+            .talk, .panel, .workshop, .lightningtalks, .teaBreak, .lunch,
+            .dinner, .confdinner, .social, .registration, .railtrip
+        ]
+        for type in typesWithSymbols {
+            #expect(UIImage(systemName: type.symbolName) != nil,
+                    "SessionType.\(type).symbolName '\(type.symbolName)' is not a valid SF Symbol")
+        }
+    }
+}
+
+/// Iterates every talk in the conference data and asserts the spoken
+/// accessibility label fully expands every part of its template — no clause
+/// is left at its placeholder fallback string. This is the closest unit-test
+/// equivalent of the Accessibility Inspector's "element label is missing or
+/// empty" audit, run exhaustively against the real bundled data.
+struct AccessibilityLabelExhaustivenessTests {
+    let viewModel = ViewModel()
+
+    /// Every talk's spoken label must contain the talk's title, the location
+    /// it's held in, the time-range accessibility string, and at least one
+    /// resolved speaker name — never a placeholder like "Speaker to be
+    /// announced" or "Talk to be announced", which would mean a reference
+    /// in `conf.json` didn't resolve.
+    @Test func everyTalkLabelExpandsEveryClause() {
+        for daySessions in viewModel.confData.sessions {
+            for session in daySessions where session.containsTalk {
+                for talkID in session.contentIDs {
+                    let label = viewModel.talkCardAccessibilityLabel(talkID: talkID, in: session)
+
+                    let title = viewModel.talkTitleFrom(talkID: talkID)
+                    let location = viewModel.locationNameFrom(talkID: talkID)
+                    let speakers = viewModel.speakersFrom(talkID: talkID)
+
+                    #expect(label.contains(title), "Label missing title '\(title)': '\(label)'")
+                    #expect(label.contains(location), "Label missing location '\(location)': '\(label)'")
+                    #expect(label.contains(speakers), "Label missing speakers '\(speakers)': '\(label)'")
+                    #expect(label.contains(session.timeRangeAccessibilityText),
+                            "Label missing time range: '\(label)'")
+
+                    #expect(!label.contains("Talk to be announced"),
+                            "Talk \(talkID) fell back to placeholder title — broken talk ID reference")
+                    #expect(!label.contains("Speaker to be announced"),
+                            "Talk \(talkID) fell back to placeholder speaker — broken speaker ID reference")
+                    #expect(!label.contains("Location to be announced"),
+                            "Talk \(talkID) fell back to placeholder location — broken location ID reference")
+                }
+            }
+        }
+    }
+}
+
+/// Checks that the strings ViewModel produces for the accessibility layer are
+/// well-formed: no `Optional(...)` leakage, no raw UUIDs surfacing as user-
+/// visible text, no double spaces or stray whitespace at the ends. These are
+/// the patterns most often flagged when reading an Accessibility Inspector
+/// audit report.
+struct ForbiddenStringTests {
+    let viewModel = ViewModel()
+
+    /// Matches any 36-character UUID surface form (8-4-4-4-12 hex with
+    /// dashes). VoiceOver should never speak one — it would say each digit
+    /// individually for several seconds.
+    private static let uuidPattern: Regex<Substring> = try! Regex("[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")
+
+    private func assertClean(_ label: String, source: String) {
+        #expect(!label.contains("Optional("), "\(source) leaks Optional(): '\(label)'")
+        #expect(!label.contains("  "), "\(source) contains a double space: '\(label)'")
+        #expect(label == label.trimmingCharacters(in: .whitespacesAndNewlines),
+                "\(source) has leading/trailing whitespace: '\(label)'")
+        #expect(label.firstMatch(of: Self.uuidPattern) == nil,
+                "\(source) contains a raw UUID: '\(label)'")
+    }
+
+    @Test func talkCardLabelsAreClean() {
+        for daySessions in viewModel.confData.sessions {
+            for session in daySessions where session.containsTalk {
+                for talkID in session.contentIDs {
+                    assertClean(viewModel.talkCardAccessibilityLabel(talkID: talkID, in: session),
+                                source: "talkCardAccessibilityLabel")
+                }
+            }
+        }
+    }
+
+    @Test func everyTalkTitleAndSpeakerStringIsClean() {
+        for talk in viewModel.confData.talks {
+            assertClean(viewModel.talkTitleFrom(talkID: talk.id), source: "talkTitleFrom")
+            assertClean(viewModel.speakersFrom(talkID: talk.id), source: "speakersFrom")
+            assertClean(viewModel.locationNameFrom(talkID: talk.id), source: "locationNameFrom(talkID:)")
+        }
+    }
+
+    @Test func everySpeakerAndLocationLookupIsClean() {
+        for speaker in viewModel.confData.speakers {
+            assertClean(viewModel.speakerNameFrom(speakerID: speaker.id), source: "speakerNameFrom")
+        }
+        for location in viewModel.confData.locations {
+            assertClean(viewModel.locationNameFrom(locationID: location.id),
+                        source: "locationNameFrom(locationID:)")
+        }
+    }
+
+    @Test func everySessionTimeRangeIsClean() {
+        for daySessions in viewModel.confData.sessions {
+            for session in daySessions where session.sessionType != .dummy {
+                assertClean(session.timeRangeAccessibilityText, source: "timeRangeAccessibilityText")
+            }
+        }
+    }
+}
+
+/// Per-speaker validation. The speaker row's accessibility label combines
+/// name + bio via `.accessibilityElement(children: .combine)`, and any social
+/// link the speaker has becomes a tappable Link with an "Opens in browser"
+/// hint. Both depend on the underlying data being sound — empty names or
+/// malformed URLs would surface to assistive tech.
+struct SpeakerAccessibilityTests {
+    let viewModel = ViewModel()
+
+    /// Every speaker in the conference data must have a non-empty name —
+    /// the SpeakerRowView's combined label collapses to just punctuation
+    /// otherwise.
+    @Test func everySpeakerHasANonEmptyName() {
+        for speaker in viewModel.confData.speakers {
+            #expect(!speaker.name.trimmingCharacters(in: .whitespaces).isEmpty,
+                    "Speaker '\(speaker.id)' has an empty name")
+        }
+    }
+
+    /// Where a speaker has a bio it must not be just whitespace — an
+    /// "appears non-empty in JSON but is actually blank" entry would
+    /// produce an accessibility row that reads only the name twice over.
+    @Test func speakerBiosAreEitherEmptyOrMeaningful() {
+        for speaker in viewModel.confData.speakers {
+            if !speaker.speakerInfo.isEmpty {
+                #expect(!speaker.speakerInfo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                        "Speaker '\(speaker.name)' has whitespace-only bio")
+            }
+        }
+    }
+
+    /// Each declared social link must parse as a URL — Link views silently
+    /// render dead if given an unparseable string, leaving Voice Control
+    /// users to issue "open <site>" commands that do nothing.
+    ///
+    /// Note: the bundled conference data packs multiple URLs into a single
+    /// `socialLink` field separated by newlines, so the contract checked here
+    /// is "every newline-separated chunk is a valid URL with a scheme".
+    /// `SocialLinksView` currently passes the whole string through a single
+    /// `URL(string:)` call without splitting, so the multi-URL entries
+    /// produce a Link with newlines embedded that the system cannot open —
+    /// see follow-up note in the audit doc.
+    @Test func everySocialLinkParsesAsAURL() {
+        for speaker in viewModel.confData.speakers {
+            for social in speaker.social {
+                let chunks = social.socialLink
+                    .split(separator: "\n", omittingEmptySubsequences: true)
+                    .map { String($0).trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
+
+                // An empty socialLink isn't strictly broken — a speaker may
+                // simply have a placeholder entry — so we only validate
+                // chunks that contain a URL candidate.
+                for chunk in chunks {
+                    let url = URL(string: chunk)
+                    #expect(url != nil,
+                            "Speaker '\(speaker.name)' has unparseable \(social.socialType) link chunk: '\(chunk)'")
+                    #expect(url?.scheme != nil,
+                            "Speaker '\(speaker.name)' \(social.socialType) link chunk lacks scheme: '\(chunk)'")
+                }
+            }
+        }
     }
 }
