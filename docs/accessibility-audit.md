@@ -27,9 +27,9 @@ For each screen, walk through with each assistive technology and tick when verif
 | Break rows show session-type symbol | n/a | n/a | n/a | ✅| ✅ | n/a |
 | Card border visible | n/a | n/a | ✅ | ✅ | n/a | n/a |
 | Time column doesn't truncate | n/a | n/a | n/a | n/a | ✅ | n/a |
-| Star bounce respects Reduce Motion | n/a | n/a | n/a | n/a | n/a | ☐ |
+| Star bounce respects Reduce Motion | n/a | n/a | n/a | n/a | n/a | ✅ |
 
-**Notes:** _add findings here_
+**Notes:** Manual pass found `.symbolEffect(.bounce, value:)` still played with system Reduce Motion on, despite Apple's guidance that symbol effects auto-suppress. `.symbolEffectsRemoved(_:)` did not help either — it only governs *indefinite* symbol effects, while `.bounce` triggered by a value-change is discrete. Fixed in `FavouriteButtonView.swift` by reading `@Environment(\.accessibilityReduceMotion)` and conditionally omitting the `.symbolEffect` modifier from the view tree entirely when Reduce Motion is on.
 
 ### Speakers tab
 
