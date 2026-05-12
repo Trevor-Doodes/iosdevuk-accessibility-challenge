@@ -22,6 +22,8 @@ struct SessionDetailView: View {
                     Spacer()
                     NavigationLink(value: LocationNavigationID(value: talk.locationID)) {
                         Label(viewModel.locationNameFrom(locationID: talk.locationID), systemImage: "mappin")
+                            .frame(minHeight: 44)
+                            .contentShape(.rect)
                     }
                     .accessibilityHint("Opens venue details and map")
                 }

@@ -2,9 +2,9 @@
 
 A structured record of the manual accessibility validation carried out for the iOSDevUK Accessibility Challenge 2026 submission. Code-side improvements are documented in the main [`README.md`](../README.md); this file captures the on-device verification.
 
-**Device:** _e.g. iPhone 16 running iOS 26.4.2
+**Device:** iPhone 16 running iOS 26.4.2
 **Tester:** Trevor Doodes
-**Date completed:** _YYYY-MM-DD_
+**Date completed:** 2026-05-12
 
 ---
 
@@ -43,6 +43,7 @@ For each screen, walk through with each assistive technology and tick when verif
 | Social links hint "Opens in browser" | ✅ | n/a | n/a | n/a |
 
 **Notes:**
+No Issues found
 
 ### Locations tab
 
@@ -66,6 +67,7 @@ For each screen, walk through with each assistive technology and tick when verif
 | No double-announce when scrolling pinned headers | ✅ | n/a | n/a | n/a |
 
 **Notes:**
+No issues found
 
 ### Session detail
 
@@ -89,6 +91,7 @@ For each screen, walk through with each assistive technology and tick when verif
 | Voice Control accepts each natural alias | n/a | ✅ |
 
 **Notes:**
+No issues found
 
 ---
 
@@ -98,16 +101,16 @@ Run **Xcode → Open Developer Tool → Accessibility Inspector → Audit** on e
 
 | Screen | Warnings found | Resolved? | Notes |
 |---|---|---|---|
-| Programme | _0_ | ✅ / ❌ | |
-| Programme — talk card | | | |
-| Programme — break row | | | |
-| Speakers list | | | |
-| Speaker detail | | | |
-| Locations list | | | |
-| Location detail | | | |
-| Session detail | | | |
-| My Schedule (empty) | | | |
-| My Schedule (with favourites) | | | |
+| Programme | _14_ | ✅  | All dynamic font sizes unsupported. False positive passes manual tests|
+| Programme — talk card | _0_ | ✅ | |
+| Programme — break row | _0_|✅| Included in Programme audit |
+| Speakers list | _2_|❌ |Contrast on tabbar, Liquid glass |
+| Speaker detail |_2_ | ✅| Dynamic font size unsupported.  False positive passes manual test|
+| Locations list | _0_|✅ | |
+| Location detail |_1_ |✅ |Dynamic font size unsupported  |
+| Session detail | _1_ | ✅ | Hit area too small on the venue `NavigationLink`. Fixed in `SessionDetailView.swift` by adding `.frame(minHeight: 44)` and `.contentShape(.rect)` to the Label inside the link so the entire 44pt-tall rectangle catches taps. |
+| My Schedule (empty) |_2_ | ✅|Dynamic font unsupported, false positive passes manual test |
+| My Schedule (with favourites) |_1_ | ❌|Contrast warning on system Liquid Glass tab bar material; iOS 26 controls this — cannot be overridden from app code |
 
 ---
 
@@ -115,13 +118,13 @@ Run **Xcode → Open Developer Tool → Accessibility Inspector → Audit** on e
 
 | Screen | Layout intact at AX5? | Notes |
 |---|---|---|
-| Programme | ☐ | |
-| Speakers | ☐ | |
-| Locations | ☐ | |
-| My Schedule | ☐ | |
-| Session detail | ☐ | |
-| Speaker detail | ☐ | |
-| Location detail | ☐ | |
+| Programme | ✅ | |
+| Speakers | ✅ | |
+| Locations | ✅ | |
+| My Schedule | ✅| |
+| Session detail | ✅ | |
+| Speaker detail | ✅ | |
+| Location detail | ✅ | |
 
 ---
 
