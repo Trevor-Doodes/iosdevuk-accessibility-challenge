@@ -104,13 +104,13 @@ Run **Xcode → Open Developer Tool → Accessibility Inspector → Audit** on e
 | Programme | _14_ | ✅  | All dynamic font sizes unsupported. False positive passes manual tests|
 | Programme — talk card | _0_ | ✅ | |
 | Programme — break row | _0_|✅| Included in Programme audit |
-| Speakers list | _2_|❌ |Contrast on tabbar, Liquid glass |
+| Speakers list | _2_| ✅ |Liquid Glass tab bar contrast resolved by `.toolbarBackground(.visible, for: .tabBar)` in `HomeView.swift`, gated on `colorSchemeContrast == .increased`, so the bar renders opaque only for users who opted into Increase Contrast. |
 | Speaker detail |_2_ | ✅| Dynamic font size unsupported.  False positive passes manual test|
 | Locations list | _0_|✅ | |
 | Location detail |_1_ |✅ |Dynamic font size unsupported  |
 | Session detail | _1_ | ✅ | Hit area too small on the venue `NavigationLink`. Fixed in `SessionDetailView.swift` by adding `.frame(minHeight: 44)` and `.contentShape(.rect)` to the Label inside the link so the entire 44pt-tall rectangle catches taps. |
 | My Schedule (empty) |_2_ | ✅|Dynamic font unsupported, false positive passes manual test |
-| My Schedule (with favourites) |_1_ | ❌|Contrast warning on system Liquid Glass tab bar material; iOS 26 controls this — cannot be overridden from app code |
+| My Schedule (with favourites) |_1_ | ✅ | Pinned section header was sitting on a translucent `.regularMaterial` that let scrolling content through and failed the contrast threshold. Fixed in `MyScheduleView.swift` by swapping to a fully opaque `Color(.systemBackground)` when `colorSchemeContrast == .increased`; the regular material is retained for users who haven't opted into Increase Contrast. |
 
 ---
 

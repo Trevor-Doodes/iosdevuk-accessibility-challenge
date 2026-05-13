@@ -7,6 +7,12 @@ import SwiftUI
 
 struct MyScheduleView: View {
     @Environment(ViewModel.self) private var viewModel
+    /// Pinned section headers sit on top of scrolling content. When the
+    /// user has Increase Contrast on we swap the header background from
+    /// `.regularMaterial` to `.thickMaterial` so the day label remains
+    /// clearly readable rather than tinted by whatever is sliding past
+    /// underneath.
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         NavigationStack {
@@ -29,10 +35,17 @@ struct MyScheduleView: View {
                                         Text(dayHeader(for: daySessions))
                                             .font(.headline)
                                             .bold()
+                                            .foregroundStyle(.primary)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.horizontal)
                                             .padding(.vertical, 8)
-                                            .background(.regularMaterial)
+                                            // Materials are always translucent, so even
+                                            // `.thickMaterial` lets enough of the scrolling
+                                            // content through to fail Inspector's contrast
+                                            // check. When Increase Contrast is on, fall back
+                                            // to a fully opaque system background so the
+                                            // day label sits on a guaranteed-contrast surface.
+                                            .background(contrast == .increased ? AnyShapeStyle(Color(.systemBackground)) : AnyShapeStyle(.regularMaterial))
                                             .accessibilityAddTraits(.isHeader)
                                     }
                                 }
