@@ -139,7 +139,21 @@ Run **Xcode → Open Developer Tool → Accessibility Inspector → Audit** on e
 
 ## Outcomes
 
-_Summarise the overall result of the validation pass: anything that was working as designed, anything caught and fixed, anything intentionally accepted as a known limitation._
+The submission passes every row of the per-screen audit across VoiceOver, Voice Control, Increase Contrast, Differentiate Without Color, AX5 Dynamic Type and Reduce Motion, and every screen in the Accessibility Inspector audit now resolves to ✅. The differentiated-haptic check on a physical iPhone 16 confirms that adding (`.success`) and removing (`.impact(weight: .light)`) a favourite feel clearly distinct.
+
+**Working as designed (no code changes needed):** the existing VoiceOver focus order on talk cards, the per-row accessibility label shape ("[Type] from [start] to [end]: [title], by [speakers], [location]"), the `accessibilityInputLabels` aliases on the favourite button and tab bar items, the `.isHeader` traits on day-section labels, the Differentiate Without Color border + SF Symbol redundancy, and the AX5 layout reflow on every screen passed on first inspection.
+
+**Caught and fixed during the manual passes:**
+- *Map marker leakage* (`LocationDetailView`) — VoiceOver read the embedded `Marker` ("<venue>, shows more info") instead of the outer label/hint. Resolved with `.accessibilityElement()` to collapse the marker subtree.
+- *Time read as digit-stream* — `.dateTime.hour(.twoDigits).minute(.twoDigits)` made VoiceOver speak "14:00" as "fourteen zero zero". Reformatted to 12-hour AM/PM with on-the-hour elision in `Session.accessibilityTimeText`.
+- *Time and venue read as separate focus stops* on `SessionDetailView` — extended the time element's accessibility label to include the venue name so both pieces are announced together while the venue link remains independently focusable and tappable.
+- *Reduce Motion ignored* by the favourite-star `.symbolEffect(.bounce)` — `.symbolEffectsRemoved(_:)` doesn't suppress discrete value-triggered effects, so the `.symbolEffect` modifier is now omitted from the view tree entirely when `accessibilityReduceMotion` is on.
+- *Hit area too small* on the venue `NavigationLink` in `SessionDetailView` — Label's natural height is ~22pt; `.frame(minHeight: 44)` plus `.contentShape(.rect)` raises the tappable rectangle to the 44pt minimum.
+- *Increase Contrast warnings* on the Liquid Glass tab bar and on the pinned day header in My Schedule — both materials let scrolling content through enough to fail Inspector's contrast threshold. The tab bar now uses `.toolbarBackground(.visible, for: .tabBar)` and the pinned header swaps to a fully opaque `Color(.systemBackground)` whenever `colorSchemeContrast == .increased`. Non-opted-in users keep Apple's intended translucent look.
+
+**Intentionally accepted:** the segmented day picker on the Programme tab does not visibly grow at AX5 because `UISegmentedControl` caps its label font and reflowing to a vertical menu would lose the at-a-glance three-day strip. The system Large Content Viewer (long-press a segment) is the accessibility-compensating affordance and is wired automatically by UIKit. Accessibility Inspector also flagged several "Dynamic Text" false positives on screens where the manual AX5 sweep confirmed layout integrity; those are recorded as `✅` with a rationale rather than fixed-in-code.
+
+**Automated counterpart:** the five Tier 1 test suites in `MythConf26Tests/MythConf26Tests.swift` exhaustively pin the accessibility-string contract — every spoken label, every time string, every SF Symbol, every social URL — against the real bundled `conf.json` on every CI run. Running the manual Inspector audit therefore remains a one-off confirmation rather than a recurring obligation.
 
 ---
 
