@@ -432,6 +432,24 @@ struct SpeakerAccessibilityTests {
     /// `URL(string:)` call without splitting, so the multi-URL entries
     /// produce a Link with newlines embedded that the system cannot open —
     /// see follow-up note in the audit doc.
+    /// `SocialLinksView` derives a friendly per-URL label from the URL's
+    /// host, with a fallback to the `SocialItem.socialType`. Pinning the
+    /// mapping here means a host-renaming or new-network change has to
+    /// trip a test before it can ship a regression to VoiceOver / Voice
+    /// Control.
+    @Test func friendlyLabelsAreDerivedFromHost() {
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://github.com/foo")!, fallbackType: "www") == "GitHub")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://www.linkedin.com/in/foo")!, fallbackType: "www") == "LinkedIn")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://mastodon.social/@foo")!, fallbackType: "www") == "Mastodon")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://mas.to/@foo")!, fallbackType: "www") == "Mastodon")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://bsky.app/profile/foo.dev")!, fallbackType: "www") == "Bluesky")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://twitter.com/foo")!, fallbackType: "www") == "Twitter / X")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://x.com/foo")!, fallbackType: "www") == "Twitter / X")
+        // Fallback path: unknown host yields the capitalised social-type.
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "www") == "Www")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "blog") == "Blog")
+    }
+
     @Test func everySocialLinkParsesAsAURL() {
         for speaker in viewModel.confData.speakers {
             for social in speaker.social {
