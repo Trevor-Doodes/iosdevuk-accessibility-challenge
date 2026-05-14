@@ -445,9 +445,14 @@ struct SpeakerAccessibilityTests {
         #expect(SocialLinksView.displayLabel(for: URL(string: "https://bsky.app/profile/foo.dev")!, fallbackType: "www") == "Bluesky")
         #expect(SocialLinksView.displayLabel(for: URL(string: "https://twitter.com/foo")!, fallbackType: "www") == "Twitter / X")
         #expect(SocialLinksView.displayLabel(for: URL(string: "https://x.com/foo")!, fallbackType: "www") == "Twitter / X")
-        // Fallback path: unknown host yields the capitalised social-type.
-        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "www") == "Www")
-        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "blog") == "Blog")
+        // Generic web/blog/www tokens collapse to "Website" so VoiceOver
+        // doesn't spell "Www" character-by-character.
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "www") == "Website")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "web") == "Website")
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://sarahthornton.dev")!, fallbackType: "blog") == "Website")
+        // Anything else falls back to capitalised social-type so a future
+        // entry like "podcast" still reads sensibly.
+        #expect(SocialLinksView.displayLabel(for: URL(string: "https://example.com/feed")!, fallbackType: "podcast") == "Podcast")
     }
 
     @Test func everySocialLinkParsesAsAURL() {

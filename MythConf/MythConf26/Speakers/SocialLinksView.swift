@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-/// A horizontal row of tappable social/web links for a speaker.
+/// A grid of tappable social/web links for a speaker.
 ///
 /// The bundled conference data packs multiple URLs into a single
 /// `SocialItem.socialLink` separated by newlines (e.g.
@@ -16,19 +16,31 @@ import SwiftUI
 /// splits each `socialLink` into its constituent URLs and renders one
 /// `Link` per chunk, each with a host-derived label so VoiceOver and
 /// Voice Control can address them individually.
+///
+/// Each link is rendered as an icon-only target with an 88×88pt hit area
+/// — double the HIG minimum — laid out in an adaptive grid so the
+/// generous touch targets wrap cleanly on narrower devices. The visible
+/// icon is small and centred; the surrounding 88×88pt rectangle catches
+/// taps for users with reduced dexterity. The friendly host-derived name
+/// ("GitHub", "Website", etc.) is exposed via `.accessibilityLabel` so
+/// VoiceOver and Voice Control announce and target each profile
+/// independently.
 struct SocialLinksView: View {
     let social: [SocialItem]
 
+    private let columns = [GridItem(.adaptive(minimum: 88), spacing: 0)]
+
     var body: some View {
-        HStack {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 0) {
             ForEach(Array(expandedLinks.enumerated()), id: \.offset) { _, link in
                 Link(destination: link.url) {
-                    Label(link.displayLabel, systemImage: link.symbolName)
-                        .font(.subheadline)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 4)
+                    Image(systemName: link.symbolName)
+                        .font(.title3)
+                        .foregroundStyle(.primary)
+                        .frame(width: 88, height: 88)
+                        .contentShape(.rect)
                 }
-                .contentShape(.rect)
+                .accessibilityLabel(link.displayLabel)
                 .accessibilityHint("Opens in browser")
                 .accessibilityInputLabels([link.displayLabel, "\(link.displayLabel) profile"])
             }
@@ -59,8 +71,10 @@ struct SocialLinksView: View {
     }
 
     /// Picks a friendly label from a URL's host. Falls back to the
-    /// `SocialItem.socialType` (capitalised) when the host doesn't match a
-    /// known network.
+    /// `SocialItem.socialType` when the host doesn't match a known
+    /// network, with the generic web/blog/`www` bucket reading as
+    /// "Website" rather than the raw token so VoiceOver doesn't speak
+    /// "Www" character-by-character.
     static func displayLabel(for url: URL, fallbackType: String) -> String {
         let host = (url.host ?? "").lowercased()
         if host.contains("github") { return "GitHub" }
@@ -68,6 +82,9 @@ struct SocialLinksView: View {
         if host.contains("mastodon") || host.hasSuffix("mas.to") || host.hasPrefix("mstdn.") || host.hasPrefix("mas.") { return "Mastodon" }
         if host.contains("bsky.app") { return "Bluesky" }
         if host.contains("twitter.com") || host == "x.com" || host.hasSuffix(".x.com") { return "Twitter / X" }
+
+        let lower = fallbackType.lowercased()
+        if ["www", "web", "website", "blog"].contains(lower) { return "Website" }
         return fallbackType.capitalized
     }
 
