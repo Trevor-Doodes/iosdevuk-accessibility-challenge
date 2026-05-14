@@ -133,6 +133,15 @@ The "Switch to My Schedule…" guidance is helpful the first time a user adds a 
 **Search announces result count** (`SpeakersView`)\
 When a user types in the speakers search field, the count of matching speakers is announced via `AccessibilityAnnouncer` (e.g. "12 speakers match"). VoiceOver users get immediate feedback on how their query is narrowing without having to navigate into the list to count results.
 
+**Temporal context throughout the Programme and My Schedule** (`SessionLiveStatus`, `ConferencePhase`, `ConferencePhaseBannerView`, `ParallelTalkCardView`, `UpNextCardView`)\
+A conference attendee's highest-frequency cognitive question is "where am I in the schedule, and what's next on my list?". Three new pieces answer it without making the user compute time from clock readings:
+
+- A **conference phase banner** at the top of the Programme tab reads `ConfData.phase(now:)` and renders "Conference starts in 3 days" / "Day 2 of 3" / "Conference has ended", with a phase-tinted background and the `.isHeader` accessibility trait so it appears in the VoiceOver heading rotor.
+- Each talk card gains a **"Now" / "In N min" badge** in the corner when the session is currently underway or starting within 15 minutes. The same status is prepended to the card's accessibility label ("Now. Workshop from 2 PM to 4 PM: ...") so VoiceOver users hear the temporal context before the rest of the announcement.
+- The **My Schedule tab promotes the user's next favourited session** to the top of the screen when it's currently live or starting within the next two hours. The promoted card flips its header from "UP NEXT" to "ON NOW" as the start time passes, and reads "Up next. <title>, at <venue>. Starts in 12 minutes." or "On now. <title>, at <venue>. Ends at 4 PM." for VoiceOver. Hidden outside the window so the screen stays quiet when nothing imminent is on the list.
+
+All three reactive pieces share a single `TimelineView(.everyMinute)` so the views roll over automatically as time passes — no manual refresh, no `Timer` plumbing. Every factory and formatter takes an explicit `now: Date` argument so the logic is fully testable without depending on the real wall clock. A new `TemporalContextTests` suite pins thirteen boundary cases including the round-up at sub-minute intervals, the midnight day-rollover, and the empty-window state.
+
 ### Hearing (bonus)
 
 **Differentiated haptic feedback when toggling a favourite** (`FavouriteButtonView`)\
@@ -149,7 +158,7 @@ The favourite star button was originally nested inside the talk card's `Navigati
 
 ## Quality
 
-The project includes **30 unit tests (Swift Testing)** organised into nine suites that together replace what the Accessibility Inspector audit checks at the data level — every spoken label is exercised exhaustively against the real bundled `conf.json` on every CI run:
+The project includes **43 unit tests (Swift Testing)** organised into ten suites that together replace what the Accessibility Inspector audit checks at the data level — every spoken label is exercised exhaustively against the real bundled `conf.json` on every CI run:
 
 - **`FavouritesTests`** (`@Suite(.serialized)`) — add/remove cycle, no-op remove, per-talk independence, `favouritesBySession` integrity.
 - **`LookupTests`** — talk/speaker/location lookup consistency, title↔ID round trip, every talk produces a non-empty location and speaker string, multi-speaker join contract.
@@ -160,6 +169,7 @@ The project includes **30 unit tests (Swift Testing)** organised into nine suite
 - **`ForbiddenStringTests`** — no `Optional(...)` leakage, no raw UUIDs, no double spaces, no leading/trailing whitespace across every accessibility string produced by `ViewModel`.
 - **`SessionTypeSymbolResolutionTests`** — every declared SF Symbol resolves via `UIImage(systemName:)` at runtime, catching typo'd icon names that would otherwise surface as empty rectangles with no description.
 - **`SpeakerAccessibilityTests`** — every speaker has a usable name, bios are either empty or meaningful, every newline-separated URL chunk in `socialLink` parses with a scheme, and the host-to-label routing used by `SocialLinksView` resolves the major networks (GitHub, Mastodon, LinkedIn, Bluesky, Twitter / X).
+- **`TemporalContextTests`** — every boundary of `SessionLiveStatus` (more than 15 min away, exactly 15, sub-minute, at start, midway, past end), the accessibility-prefix and badge-text formatters, and `ConfData.phase(now:)` for upcoming / today / mid-conference / finished states. Every factory takes an explicit `now: Date` so the suite is fully wall-clock-independent.
 
 Run with: `xcodebuild test -project MythConf/MythConf26.xcodeproj -scheme MythConf26 -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`
 
