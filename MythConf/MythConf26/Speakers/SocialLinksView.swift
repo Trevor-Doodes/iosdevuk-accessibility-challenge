@@ -17,33 +17,52 @@ import SwiftUI
 /// `Link` per chunk, each with a host-derived label so VoiceOver and
 /// Voice Control can address them individually.
 ///
-/// Each link is rendered as an icon-only target with an 88×88pt hit area
-/// — double the HIG minimum — laid out in an adaptive grid so the
-/// generous touch targets wrap cleanly on narrower devices. The visible
-/// icon is small and centred; the surrounding 88×88pt rectangle catches
-/// taps for users with reduced dexterity. The friendly host-derived name
-/// ("GitHub", "Website", etc.) is exposed via `.accessibilityLabel` so
-/// VoiceOver and Voice Control announce and target each profile
-/// independently.
+/// Each link is rendered as an icon-only target with a 50×50pt frame —
+/// above the HIG 44pt minimum and small enough that a row of five fits
+/// on iPhone portrait. The friendly host-derived name ("GitHub",
+/// "Website", etc.) is exposed via `.accessibilityLabel` so VoiceOver
+/// and Voice Control announce and target each profile independently.
+///
+/// Glyph resolution is two-tier: each `ResolvedLink` carries an
+/// `assetName` that points at an Asset Catalog entry (e.g.
+/// `"social-github"`). When the asset exists, the official brand glyph
+/// is rendered as a template image so it picks up the foreground style.
+/// When the asset is missing, the SF Symbol fallback in `symbolName` is
+/// rendered instead, so the view works without further code changes
+/// whether or not the brand-icon assets have been added.
 struct SocialLinksView: View {
     let social: [SocialItem]
 
-    private let columns = [GridItem(.adaptive(minimum: 88), spacing: 0)]
+    private let columns = [GridItem(.adaptive(minimum: 50), spacing: 0)]
 
     var body: some View {
         LazyVGrid(columns: columns, alignment: .leading, spacing: 0) {
             ForEach(Array(expandedLinks.enumerated()), id: \.offset) { _, link in
                 Link(destination: link.url) {
-                    Image(systemName: link.symbolName)
-                        .font(.title3)
-                        .foregroundStyle(.primary)
-                        .frame(width: 88, height: 88)
+                    icon(for: link)
+                        .frame(width: 50, height: 50)
                         .contentShape(.rect)
                 }
                 .accessibilityLabel(link.displayLabel)
                 .accessibilityHint("Opens in browser")
                 .accessibilityInputLabels([link.displayLabel, "\(link.displayLabel) profile"])
             }
+        }
+    }
+
+    @ViewBuilder
+    private func icon(for link: ResolvedLink) -> some View {
+        if let assetName = link.assetName, UIImage(named: assetName) != nil {
+            Image(assetName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(.primary)
+                .padding(8)
+        } else {
+            Image(systemName: link.symbolName)
+                .font(.title3)
+                .foregroundStyle(.primary)
         }
     }
 
@@ -58,7 +77,8 @@ struct SocialLinksView: View {
                     return ResolvedLink(
                         url: url,
                         displayLabel: Self.displayLabel(for: url, fallbackType: item.socialType),
-                        symbolName: Self.symbolName(for: url, fallbackType: item.socialType)
+                        symbolName: Self.symbolName(for: url, fallbackType: item.socialType),
+                        assetName: Self.assetName(for: url, fallbackType: item.socialType)
                     )
                 }
         }
@@ -68,6 +88,7 @@ struct SocialLinksView: View {
         let url: URL
         let displayLabel: String
         let symbolName: String
+        let assetName: String?
     }
 
     /// Picks a friendly label from a URL's host. Falls back to the
@@ -88,9 +109,8 @@ struct SocialLinksView: View {
         return fallbackType.capitalized
     }
 
-    /// Picks an SF Symbol from a URL's host. Falls back to the legacy
-    /// `iconName(for:)` mapping driven by `SocialItem.socialType` when no
-    /// host match exists.
+    /// Picks an SF Symbol from a URL's host. Used as the fallback glyph
+    /// when an Asset Catalog brand icon is not present.
     static func symbolName(for url: URL, fallbackType: String) -> String {
         let host = (url.host ?? "").lowercased()
         if host.contains("github") { return "chevron.left.forwardslash.chevron.right" }
@@ -99,6 +119,26 @@ struct SocialLinksView: View {
         if host.contains("bsky.app") { return "cloud" }
         if host.contains("twitter.com") || host == "x.com" || host.hasSuffix(".x.com") { return "at" }
         return Self.fallbackSymbolName(for: fallbackType)
+    }
+
+    /// Maps a URL's host to an Asset Catalog name. The corresponding
+    /// asset should be a vector PDF template image (single colour, alpha
+    /// channel) so it inherits `foregroundStyle(.primary)`. Drop the
+    /// official brand SVGs from simpleicons.org (or each brand's own
+    /// guidelines) into `Assets.xcassets` with these names and they will
+    /// be picked up automatically. Returns `nil` for unknown buckets so
+    /// the SF Symbol fallback is used.
+    static func assetName(for url: URL, fallbackType: String) -> String? {
+        let host = (url.host ?? "").lowercased()
+        if host.contains("github") { return "social-github" }
+        if host.contains("linkedin") { return "social-linkedin" }
+        if host.contains("mastodon") || host.hasSuffix("mas.to") || host.hasPrefix("mstdn.") || host.hasPrefix("mas.") { return "social-mastodon" }
+        if host.contains("bsky.app") { return "social-bluesky" }
+        if host.contains("twitter.com") || host == "x.com" || host.hasSuffix(".x.com") { return "social-twitter-x" }
+
+        let lower = fallbackType.lowercased()
+        if ["www", "web", "website", "blog"].contains(lower) { return "social-website" }
+        return nil
     }
 
     private static func fallbackSymbolName(for type: String) -> String {
