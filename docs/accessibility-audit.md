@@ -209,6 +209,10 @@ Re-launch the app and walk each screen. Pass criteria: no meaning-bearing text t
 
 Real device only — haptics do not fire in the simulator. Open Programme → tap a star to add (expect `.success`, a brief double-pulse) → tap the same star to remove (expect `.impact(weight: .light)`, a single soft thud). The pair should feel meaningfully different with your eyes closed.
 
+### Verifying the temporal-context features
+
+The conference-phase banner (top of Programme), the "Now" / "In N min" badges on each talk card, and the "Up next" promotion at the top of My Schedule are all reactive to the wall clock — they only surface inside specific time windows relative to the bundled `conf.json` dates (2–5 September 2027). To see them live without waiting for the real conference, set your Mac's clock to a date during the conference and re-launch the simulator: **System Settings → General → Date & Time → toggle off "Set time and date automatically" → set the date to 3 September 2027, 11:00**. The phase banner becomes "Day 2 of 4"; the talk card whose `startTime` falls inside the current 15-minute window shows an "In N min" badge; the talk currently underway shows a "Now" badge; and any session you favourite that's starting within the next two hours is promoted to the top of My Schedule. Revert the clock to automatic when done. The same behaviour is exhaustively pinned by the `TemporalContextTests` suite in `MythConf26Tests.swift`, which runs against injected `now` values rather than the real clock and passes on every CI run.
+
 ### Automated counterpart
 
 The five Tier 1 test suites in `MythConf26Tests/MythConf26Tests.swift` replicate what the Accessibility Inspector's audit checks at the data level — every spoken label is exercised against every talk, speaker, session and location in `conf.json` on every CI run. Running the manual Inspector audit is therefore a one-off confirmation rather than a recurring obligation.
