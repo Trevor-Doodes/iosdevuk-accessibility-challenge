@@ -130,6 +130,9 @@ Every navigable row now has an `.accessibilityHint` describing the consequence o
 **Adaptive announcement on first favourite** (`FavouriteButtonView`)\
 The "Switch to My Schedule…" guidance is helpful the first time a user adds a favourite but becomes verbose noise on every subsequent action. A persisted `hasSeenFavouritesHint` flag means the long form is spoken once per app install; afterwards, adds are confirmed with a concise "Added to favourites." Removes are always concise.
 
+**Day picker speaks full weekday names** (`ProgrammeView`)\
+The Programme day picker is a segmented control showing abbreviated weekday names ("Mon", "Tue", "Sat", "Sun") because all five days have to fit horizontally on iPhone. iOS speech engines mis-pronounce the three-letter abbreviations — "Sat" reads as the verb and "Sun" as the celestial body — so each segment now carries a separate `.accessibilityLabel` built from `.weekday(.wide)` ("Saturday", "Sunday"). The visible UI stays compact; VoiceOver hears the full word.
+
 **Search announces result count** (`SpeakersView`)\
 When a user types in the speakers search field, the count of matching speakers is announced via `AccessibilityAnnouncer` (e.g. "12 speakers match"). VoiceOver users get immediate feedback on how their query is narrowing without having to navigate into the list to count results.
 
