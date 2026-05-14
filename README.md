@@ -40,13 +40,28 @@ The favourite button's hit area is 88×88 points — double the HIG minimum. To 
 **Differentiated haptics** (`FavouriteButtonView`)\
 Add fires `.success`; remove fires `.impact(weight: .light)`. Two distinguishable patterns let a user without sight or sound tell which action occurred — not just that something happened.
 
+**VoiceOver-friendly time formatter** (`Session`)\
+The visible 24-hour two-digit time strings ("09:30", "14:00") are read by speech engines as digit streams ("zero nine thirty", "fourteen zero zero"). `Session.accessibilityTimeText` reformats to 12-hour AM/PM, strips the colon (which speech engines render as a pause), and elides the minute digits entirely on the hour, so "16:00" reads as "4 PM" rather than "four zero zero". The exact contract is pinned by six Swift Testing cases including an exhaustive sweep of every session in `conf.json`.
+
+**Reduce Motion suppression of discrete symbol effects** (`FavouriteButtonView`)\
+`.symbolEffectsRemoved(_:)` only governs *indefinite* symbol effects, so the favourite-star `.bounce` still played when the user had Reduce Motion on. `FavouriteButtonView` now reads `@Environment(\.accessibilityReduceMotion)` and conditionally omits the `.symbolEffect` modifier from the view tree entirely, so the star changes state with no animation under Reduce Motion. The fix and the underlying SDK gotcha are documented in code so future contributors don't reach for the wrong API.
+
+**Per-URL splitting of speaker social links** (`SocialLinksView`)\
+The bundled conference data packs multiple URLs into a single `SocialItem.socialLink` field separated by newlines. `URL(string:)` is lenient enough to accept the combined string, but the resulting URL has embedded newlines and the system cannot open it — leaving Voice Control commands like "Open GitHub" producing no result. `SocialLinksView` now splits each `socialLink` on newlines and renders one `Link` per URL with a host-derived friendly label ("GitHub", "Mastodon", "LinkedIn", "Bluesky", "Twitter / X"), each individually addressable by VoiceOver and Voice Control. The bug was surfaced by `SpeakerAccessibilityTests.everySocialLinkParsesAsAURL` in the Tier 1 test suite.
+
 ### Vision
 
 **Speaker photos now have text alternatives** (`SpeakerPhotoView`)\
 Every speaker photo is labelled with the speaker's name (e.g. "Jane Smith's profile photo"). When no personal photo is available the fallback image is labelled "Profile photo not available". Previously the images were invisible to VoiceOver, giving users no indication of whose photo they were viewing.
 
 **Map view now has an accessible description** (`LocationDetailView`)\
-The interactive map on each location detail screen is labelled "Map showing the location of [Venue Name]" with a hint directing users to the text description below. Without this, VoiceOver users received no useful information from the map element.
+The interactive map on each location detail screen is labelled "Map showing the location of [Venue Name]" with a hint directing users to the text description below. The embedded `Marker` was originally leaking through as VoiceOver's focused element — the system supplied its own "shows more info" trait that shadowed the outer label and hint. `.accessibilityElement()` is now applied to the Map ahead of the label/hint, collapsing the marker subtree so the custom hint is what VoiceOver speaks.
+
+**Time and venue announced together on session detail** (`SessionDetailView`)\
+The time element on the session-detail screen previously read only "Time 9:30 AM to 10:15 AM"; the venue was a separate focus stop further along the row. The time's accessibility label is now extended to include the venue name ("Time 9:30 AM to 10:15 AM, at Tilsley Theatre") so the first focus stop gives both pieces in one announcement, while the venue `NavigationLink` remains a separate, independently tappable focus stop.
+
+**Increase Contrast warnings on tab bar and pinned headers resolved** (`HomeView`, `MyScheduleView`)\
+Materials are always translucent — even `.thickMaterial` lets enough of the scrolling content through to fail Accessibility Inspector's contrast threshold. When `colorSchemeContrast == .increased`, `HomeView` applies `.toolbarBackground(.visible, for: .tabBar)` so the Liquid Glass tab bar renders opaque, and the pinned section headers in `MyScheduleView` swap to a fully opaque `Color(.systemBackground)`. Users who haven't opted into Increase Contrast keep Apple's intended translucent look.
 
 **Break and social rows convey type without relying on colour alone** (`BreakRowView`)\
 Rows such as Lunch, Tea Break, and Conference Dinner used a tinted background as the only visual distinction between session types. Each row now has a combined accessibility label that reads the session type and time range aloud (e.g. "Lunch, 12:30 to 14:00"), making the information available to users who cannot perceive colour.
@@ -92,13 +107,16 @@ The card's full accessibility label is over seventy characters long (session typ
 **Tab bar input labels** (`HomeView`)\
 Each tab carries multiple natural input labels — "Programme" / "Schedule" / "Sessions", "Speakers" / "People", "Locations" / "Map" / "Venues", "My Schedule" / "Favourites" / "Saved" — so a Voice Control user can say whichever phrase comes naturally to them rather than having to remember the exact tab title.
 
+**Venue link on session detail meets the 44pt minimum** (`SessionDetailView`)\
+The venue `NavigationLink` was a Label whose natural height is ~22pt at default font sizes — under the HIG 44pt minimum and flagged by Accessibility Inspector as a too-small hit region. `.frame(minHeight: 44)` and `.contentShape(.rect)` enlarge the tappable rectangle to 44pt so the entire row catches taps rather than just the text glyphs.
+
 ### Cognitive
 
 **Section headings announce as headers** (`SpeakerDetailView`, `MyScheduleView`)\
 The "Sessions" heading on speaker detail pages and the day headings on My Schedule now carry the `.isHeader` accessibility trait. VoiceOver users can navigate by headings using the rotor, letting them jump straight to key sections without reading every element on screen.
 
-**Social links hint that they open externally** (`SocialLinksView`)\
-Each social or website link on a speaker's profile now has the hint "Opens in browser". This sets the user's expectation before they activate the link, avoiding confusion when they are taken out of the app.
+**Each speaker social profile is its own labelled link** (`SocialLinksView`)\
+Speakers with multiple sites (GitHub, Mastodon, LinkedIn, Bluesky, personal blog) are now rendered as one tappable `Link` per URL, each labelled with the host-derived network name ("GitHub", "Mastodon", "LinkedIn", "Bluesky", "Twitter / X") and hinted as "Opens in browser". VoiceOver and Voice Control users can address each profile individually — "Tap GitHub", "Tap LinkedIn" — instead of being shown a single combined entry that previously couldn't open at all because of newlines packed into the data string.
 
 **Favourite button label conveys state and hint explains its action** (`FavouriteButtonView`)\
 The accessibility label flips between "Add to favourites" and "Remove from favourites" so VoiceOver users hear the current state directly without an extra "Selected" announcement on top. The button also carries a hint ("Adds this session to your saved schedule" / "Removes this session from your saved schedule") so users understand the consequence of activating it before they double-tap.
@@ -131,14 +149,20 @@ The favourite star button was originally nested inside the talk card's `Navigati
 
 ## Quality
 
-The project includes 15 unit tests (Swift Testing) covering:
-- the favourites add/remove cycle, including no-op remove and per-talk independence;
-- talk/speaker/location lookup consistency, round-trip integrity, and the contract that every talk produces a non-empty location and speaker string;
-- the talk card's spoken accessibility label shape, including a corpus check that no talk produces a malformed sentence (stray comma, empty clause);
-- the contract that every non-dummy `SessionType` has both a display name and an SF Symbol so the shape-based cue is always present.
+The project includes **30 unit tests (Swift Testing)** organised into nine suites that together replace what the Accessibility Inspector audit checks at the data level — every spoken label is exercised exhaustively against the real bundled `conf.json` on every CI run:
+
+- **`FavouritesTests`** (`@Suite(.serialized)`) — add/remove cycle, no-op remove, per-talk independence, `favouritesBySession` integrity.
+- **`LookupTests`** — talk/speaker/location lookup consistency, title↔ID round trip, every talk produces a non-empty location and speaker string, multi-speaker join contract.
+- **`TalkCardAccessibilityLabelTests`** — exact spoken-label shape (prefix/infix/suffix) plus a corpus check that no talk produces a malformed sentence.
+- **`SessionTypeTests`** — every non-dummy `SessionType` has both a display name and an SF Symbol so the shape-based cue is always present.
+- **`SessionTimeAccessibilityTests`** — six pinning tests for the 12-hour AM/PM time formatter, including exhaustive iteration over every real session in `conf.json` to confirm none contains a colon, has a leading zero, or lacks an AM/PM suffix.
+- **`AccessibilityLabelExhaustivenessTests`** — iterates every talk in the data and asserts the spoken label expands every clause; placeholder fallback strings ("Talk to be announced", "Speaker to be announced", "Location to be announced") would fail the test, catching broken references in `conf.json` before they reach VoiceOver.
+- **`ForbiddenStringTests`** — no `Optional(...)` leakage, no raw UUIDs, no double spaces, no leading/trailing whitespace across every accessibility string produced by `ViewModel`.
+- **`SessionTypeSymbolResolutionTests`** — every declared SF Symbol resolves via `UIImage(systemName:)` at runtime, catching typo'd icon names that would otherwise surface as empty rectangles with no description.
+- **`SpeakerAccessibilityTests`** — every speaker has a usable name, bios are either empty or meaningful, every newline-separated URL chunk in `socialLink` parses with a scheme, and the host-to-label routing used by `SocialLinksView` resolves the major networks (GitHub, Mastodon, LinkedIn, Bluesky, Twitter / X).
 
 Run with: `xcodebuild test -project MythConf/MythConf26.xcodeproj -scheme MythConf26 -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`
 
 The same command runs in CI on every push via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
-Manual on-device validation results — VoiceOver, Voice Control, Increase Contrast, Differentiate Without Color, AX5 Dynamic Type, Reduce Motion, and the Accessibility Inspector audit — are recorded in [`docs/accessibility-audit.md`](docs/accessibility-audit.md).
+Manual on-device validation results — VoiceOver, Voice Control, Increase Contrast, Differentiate Without Color, AX5 Dynamic Type, Reduce Motion, and the Accessibility Inspector audit — are recorded in [`docs/accessibility-audit.md`](docs/accessibility-audit.md), along with an appendix explaining how to reproduce each section of the audit on a device or simulator.
