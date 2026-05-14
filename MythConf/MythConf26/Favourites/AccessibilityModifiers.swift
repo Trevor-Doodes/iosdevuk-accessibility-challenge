@@ -5,23 +5,27 @@
 
 import SwiftUI
 
-/// Applies `.foregroundStyle(.secondary)` for normal viewing but switches to
-/// `.primary` when the user has enabled Increase Contrast. Many of the
-/// secondary captions in the app sit on tinted backgrounds where the system
-/// secondary colour falls below the WCAG 4.5:1 contrast threshold.
+/// Applies `.foregroundStyle(.primary)` unconditionally. Was originally
+/// `.secondary` switching to `.primary` under Increase Contrast, but
+/// Accessibility Inspector flagged `.secondary` text sitting on the
+/// 10 % session-type tints as below the WCAG 4.5:1 contrast threshold
+/// even at default contrast. The hierarchy on the affected views (talk
+/// cards, time column, location captions) is already carried by font
+/// size + weight — the bold subheadline title remains the clear focal
+/// point regardless of caption colour — so promoting the captions to
+/// primary passes contrast without flattening the design.
 private struct ContrastAdaptiveSecondary: ViewModifier {
-    @Environment(\.colorSchemeContrast) private var contrast
-
     func body(content: Content) -> some View {
-        content.foregroundStyle(contrast == .increased ? .primary : .secondary)
+        content.foregroundStyle(.primary)
     }
 }
 
 extension View {
-    /// Use in place of `.foregroundStyle(.secondary)` on captions/subtitles
-    /// that sit on tinted backgrounds. Preserves the visual hierarchy in
-    /// default contrast and lifts the colour to primary when the user has
-    /// switched on Increase Contrast.
+    /// Use in place of `.foregroundStyle(.secondary)` on captions and
+    /// subtitles that sit on tinted backgrounds. Renders as `.primary`
+    /// so the WCAG 4.5:1 threshold is met without the user needing to
+    /// opt into Increase Contrast; relies on font size and weight to
+    /// preserve visual hierarchy.
     func contrastAdaptiveSecondary() -> some View {
         modifier(ContrastAdaptiveSecondary())
     }

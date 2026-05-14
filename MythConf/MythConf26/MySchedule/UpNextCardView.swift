@@ -39,13 +39,18 @@ struct UpNextCardView: View {
     private func cardBody(talkID: UUID) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
+                // Colour identity stays on the icon so the status is
+                // still glanceable; the text uses .primary so it meets
+                // the WCAG 4.5:1 contrast threshold against the tinted
+                // card background. Orange-on-orange (and accent-on-accent)
+                // failed Accessibility Inspector's contrast audit.
                 Image(systemName: liveStatus == .live ? "circle.fill" : "clock")
                     .foregroundStyle(liveStatus == .live ? Color.orange : Color.accentColor)
                     .accessibilityHidden(true)
                 Text(headerLabel.uppercased())
                     .font(.caption)
                     .bold()
-                    .foregroundStyle(liveStatus == .live ? Color.orange : Color.accentColor)
+                    .foregroundStyle(.primary)
                     .accessibilityHidden(true)
             }
 
