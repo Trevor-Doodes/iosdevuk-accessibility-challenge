@@ -477,3 +477,123 @@ struct SpeakerAccessibilityTests {
         }
     }
 }
+
+/// Pinning tests for the temporal-context features on Programme + My
+/// Schedule. All factories take an explicit `now` so the tests are
+/// independent of the real wall clock.
+struct TemporalContextTests {
+    /// Helper — synthesise a Session with a fixed start/end relative to
+    /// a baseline date so the offsets in the tests below read naturally.
+    private static func session(startOffset: TimeInterval, durationMinutes: Int = 45, anchor: Date = baseline) -> Session {
+        let start = anchor.addingTimeInterval(startOffset)
+        let end = start.addingTimeInterval(TimeInterval(durationMinutes * 60))
+        return Session(startTime: start, endTime: end, sessionType: .talk, sessionCount: 1)
+    }
+
+    /// 2026-09-08 09:00 — an arbitrary baseline; only relative offsets
+    /// matter for the assertions below.
+    static let baseline = Calendar.current.date(from: DateComponents(year: 2026, month: 9, day: 8, hour: 9, minute: 0))!
+
+    // MARK: - SessionLiveStatus
+
+    @Test func sessionMoreThanFifteenMinutesAwayIsUpcoming() {
+        let s = Self.session(startOffset: 60 * 60)            // 1 hour away
+        #expect(SessionLiveStatus.status(for: s, now: Self.baseline) == .upcoming)
+    }
+
+    @Test func sessionExactlyFifteenMinutesAwayIsStartingSoon() {
+        let s = Self.session(startOffset: 15 * 60)            // 15 min away
+        #expect(SessionLiveStatus.status(for: s, now: Self.baseline) == .startingSoon(minutesUntil: 15))
+    }
+
+    @Test func sessionWithSecondsToGoRoundsUpToOneMinute() {
+        let s = Self.session(startOffset: 30)                 // 30 s away → 1 min
+        #expect(SessionLiveStatus.status(for: s, now: Self.baseline) == .startingSoon(minutesUntil: 1))
+    }
+
+    @Test func sessionAtStartTimeIsLive() {
+        let s = Self.session(startOffset: 0)
+        #expect(SessionLiveStatus.status(for: s, now: Self.baseline) == .live)
+    }
+
+    @Test func sessionMidwayIsLive() {
+        let s = Self.session(startOffset: -10 * 60)           // started 10 min ago
+        #expect(SessionLiveStatus.status(for: s, now: Self.baseline) == .live)
+    }
+
+    @Test func sessionPastEndTimeIsFinished() {
+        let s = Self.session(startOffset: -60 * 60)           // ended 15 min ago
+        #expect(SessionLiveStatus.status(for: s, now: Self.baseline) == .finished)
+    }
+
+    // MARK: - Accessibility prefixes and badge text
+
+    @Test func accessibilityPrefixesReadNaturally() {
+        #expect(SessionLiveStatus.upcoming.accessibilityPrefix == "")
+        #expect(SessionLiveStatus.finished.accessibilityPrefix == "")
+        #expect(SessionLiveStatus.live.accessibilityPrefix == "Now. ")
+        #expect(SessionLiveStatus.startingSoon(minutesUntil: 1).accessibilityPrefix == "Starts in 1 minute. ")
+        #expect(SessionLiveStatus.startingSoon(minutesUntil: 12).accessibilityPrefix == "Starts in 12 minutes. ")
+    }
+
+    @Test func badgeTextMatchesVisualStyle() {
+        #expect(SessionLiveStatus.upcoming.badgeText == nil)
+        #expect(SessionLiveStatus.finished.badgeText == nil)
+        #expect(SessionLiveStatus.live.badgeText == "Now")
+        #expect(SessionLiveStatus.startingSoon(minutesUntil: 7).badgeText == "In 7 min")
+    }
+
+    // MARK: - ConfData.phase
+
+    /// Build a minimal ConfData with a 3-day conference starting on the
+    /// baseline date.
+    private static func conf(days: Int = 3) -> ConfData {
+        let cal = Calendar.current
+        let startOfFirstDay = cal.startOfDay(for: baseline)
+        let sessions: [[Session]] = (0..<days).map { dayOffset in
+            let dayStart = cal.date(byAdding: .day, value: dayOffset, to: startOfFirstDay)!
+            let nineAM = cal.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart)!
+            let fivePM = cal.date(bySettingHour: 17, minute: 0, second: 0, of: dayStart)!
+            return [
+                Session(startTime: nineAM, endTime: nineAM.addingTimeInterval(45 * 60), sessionType: .talk, sessionCount: 1),
+                Session(startTime: fivePM.addingTimeInterval(-45 * 60), endTime: fivePM, sessionType: .talk, sessionCount: 1)
+            ]
+        }
+        return ConfData(version: 1, speakers: [], talks: [], locations: [], sessions: sessions)
+    }
+
+    @Test func phaseUpcomingCountsCalendarDays() {
+        let conf = Self.conf()
+        let twoDaysBefore = Calendar.current.date(byAdding: .day, value: -2, to: Self.baseline)!
+        #expect(conf.phase(now: twoDaysBefore) == .upcoming(daysUntil: 2))
+    }
+
+    @Test func phaseUpcomingTodayIsZeroDays() {
+        // Slightly before the conference's first session on day 1.
+        let conf = Self.conf()
+        let earlierToday = Calendar.current.date(byAdding: .hour, value: -2, to: Self.baseline)!
+        #expect(conf.phase(now: earlierToday) == .inProgress(dayNumber: 1, totalDays: 3))
+    }
+
+    @Test func phaseDuringConferenceReportsDayNumber() {
+        let conf = Self.conf()
+        let dayTwo = Calendar.current.date(byAdding: .day, value: 1, to: Self.baseline)!
+        #expect(conf.phase(now: dayTwo) == .inProgress(dayNumber: 2, totalDays: 3))
+    }
+
+    @Test func phaseFinishedAfterFinalDayEnd() {
+        let conf = Self.conf()
+        let dayAfter = Calendar.current.date(byAdding: .day, value: 5, to: Self.baseline)!
+        #expect(conf.phase(now: dayAfter) == .finished)
+    }
+
+    // MARK: - Banner text
+
+    @Test func bannerTextIsHuman() {
+        #expect(ConferencePhase.upcoming(daysUntil: 0).bannerText == "Conference starts today")
+        #expect(ConferencePhase.upcoming(daysUntil: 1).bannerText == "Conference starts tomorrow")
+        #expect(ConferencePhase.upcoming(daysUntil: 5).bannerText == "Conference starts in 5 days")
+        #expect(ConferencePhase.inProgress(dayNumber: 2, totalDays: 3).bannerText == "Day 2 of 3")
+        #expect(ConferencePhase.finished.bannerText == "Conference has ended")
+    }
+}

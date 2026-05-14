@@ -26,6 +26,17 @@ struct MyScheduleView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                            // Re-evaluate Up Next every minute so the
+                            // promoted session rolls over as time passes
+                            // without any manual refresh.
+                            TimelineView(.everyMinute) { context in
+                                if let session = viewModel.nextUpcomingFavouriteSession(now: context.date) {
+                                    UpNextCardView(session: session, now: context.date)
+                                        .padding(.horizontal)
+                                        .padding(.top, 8)
+                                }
+                            }
+
                             ForEach(viewModel.favouritesBySession.indices, id: \.self) { dayIndex in
                                 let daySessions = viewModel.favouritesBySession[dayIndex]
                                 if daySessions.first?.sessionType != .dummy {

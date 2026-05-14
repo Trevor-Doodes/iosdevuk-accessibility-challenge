@@ -115,12 +115,12 @@ class ViewModel {
     /// with a pause between hour and minutes.
     ///
     /// Format: "[Type] from [start] to [end]: [title], by [speakers], [location]"
-    func talkCardAccessibilityLabel(talkID: UUID, in session: Session) -> String {
+    func talkCardAccessibilityLabel(talkID: UUID, in session: Session, liveStatus: SessionLiveStatus = .upcoming) -> String {
         let type = session.sessionType.displayName
         let title = talkTitleFrom(talkID: talkID)
         let speakers = speakersFrom(talkID: talkID)
         let location = locationNameFrom(talkID: talkID)
-        return "\(type) from \(session.startTimeAccessibilityText) to \(session.endTimeAccessibilityText): \(title), by \(speakers), \(location)"
+        return "\(liveStatus.accessibilityPrefix)\(type) from \(session.startTimeAccessibilityText) to \(session.endTimeAccessibilityText): \(title), by \(speakers), \(location)"
     }
     
     // Handling favourites
@@ -191,6 +191,33 @@ class ViewModel {
     func isFavourite(talk: Talk) -> Bool {
         return favouriteIds.contains(talk.id)
     }
- 
+
+    /// Window (in seconds) inside which a future favourite is promoted
+    /// to the "Up next" slot on the My Schedule tab. Two hours covers
+    /// most of a conference morning or afternoon while keeping the
+    /// promotion quiet when the user has nothing imminent.
+    static let upNextWindow: TimeInterval = 2 * 60 * 60
+
+    /// The favourited session most relevant *right now* — either
+    /// currently underway or starting within the next two hours.
+    /// Returns `nil` outside the window so the view can hide the slot
+    /// rather than showing far-future or finished sessions.
+    func nextUpcomingFavouriteSession(now: Date = .now) -> Session? {
+        let candidates = confData.sessions.flatMap { $0 }
+            .filter { $0.containsTalk }
+            .filter { $0.contentIDs.contains(where: { favouriteIds.contains($0) }) }
+            .filter { now <= $0.endTime }
+
+        let live = candidates.first(where: { $0.startTime <= now && now <= $0.endTime })
+        if let live { return live }
+
+        let upcoming = candidates
+            .filter { $0.startTime > now }
+            .sorted { $0.startTime < $1.startTime }
+            .first
+
+        guard let upcoming else { return nil }
+        return upcoming.startTime.timeIntervalSince(now) <= Self.upNextWindow ? upcoming : nil
+    }
 }
 

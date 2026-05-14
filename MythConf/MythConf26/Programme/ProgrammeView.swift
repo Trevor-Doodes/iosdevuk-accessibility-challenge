@@ -14,6 +14,8 @@ struct ProgrammeView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                ConferencePhaseBannerView()
+
                 Picker("Conference day", selection: $selectedDayIndex) {
                     ForEach(days.indices, id: \.self) { index in
                         Text(dayLabel(for: days[index]))
